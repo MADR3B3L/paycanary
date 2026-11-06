@@ -120,6 +120,30 @@ class ShadowHardStops(unittest.TestCase):
         self.assertTrue(out_b.get("duplicate"))
         self.assertEqual(len(pp.calls), 1)
 
+    def test_cooldown_release_books_spend_at_release_time(self):
+        # a payment held for 2h then auto-released must count its spend in the CURRENT hour,
+        # not the original (held) hour, or the rolling cap under-counts and later payments slip through.
+        import json as _json
+        HOUR = 3600.0
+        svc, pp = mk(mode="enforce", platform_cap=100000.0)
+        now = 1_700_000_000.0
+        pid = "pay-tsbook01"
+        orig_ts = now - 2 * HOUR
+        svc.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": orig_ts, "payee": "NewVendor",
+            "recipient": "x@y.com", "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+            "verdict": "review", "score_kind": "cooling-off", "reason": "cooling-off: first payment", "status": "frozen",
+            "provider": "paypal", "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie",
+            "event_json": _json.dumps({"kind": "txn", "agent": "a1", "payee": "NewVendor", "recipient": "x@y.com",
+                                       "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "require_intent": False}),
+            "narration": None, "risk": 0.1, "llm_flag": None, "mode": "enforce", "enforced": 1,
+            "policy_hash": "h", "release_at": orig_ts + 1800})
+        svc.store.update_payment(pid, evidence_json=_json.dumps({"hint": "none", "checked": ["domain_age_days", "blocklist"]}))
+        svc._try_auto_release(svc.store.payment(pid), now)
+        after = svc.store.payment(pid)
+        self.assertEqual(after["status"], "sent")
+        self.assertAlmostEqual(after["ts"], now, delta=5)                 # spend booked at release time
+        self.assertTrue(len(svc.store.window_rows("a1", now - 1800)) >= 1)  # visible in the current window
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

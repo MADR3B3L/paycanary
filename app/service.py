@@ -384,6 +384,8 @@ class Service:
         checked = set(ev.get("checked") or [])
         if ev.get("hint") != "none" or not {"domain_age_days", "blocklist"} <= checked:
             return self._hold_for_human(p, "adverse or incomplete evidence (hint=%s, checked=%s)" % (ev.get("hint"), sorted(checked)))
+        # re-check AND claim under ONE lock hold: the rolling-cap decision and the reservation must be atomic,
+        # or a concurrent payment can slip in on the same window between the check and the claim.
         with self._decide_lock:
             cur = self.store.payment(pid)
             if not cur or cur["status"] != "frozen":
@@ -402,12 +404,15 @@ class Service:
                 txn["evidence"] = evn
             tier, kind, reason = G.classify(txn, hist)
             cap_usd = float(cur["amount"]) * (txn["fx"])                             # the platform cap is a hard USD ceiling nothing crosses, not even a cooldown auto-release
-        if tier == "freeze":
-            return self._hold_for_human(p, "re-check now freezes it: " + reason)
-        if self.platform_cap is not None and cap_usd > self.platform_cap:
-            return self._hold_for_human(p, "re-check now exceeds the platform cap (%.2f USD): held for a human" % cap_usd)
-        if not self.store.claim_release(pid, "auto:cooldown"):
-            return "skipped", "claimed elsewhere or denied"
+            if tier == "freeze":
+                return self._hold_for_human(p, "re-check now freezes it: " + reason)
+            if self.platform_cap is not None and cap_usd > self.platform_cap:
+                return self._hold_for_human(p, "re-check now exceeds the platform cap (%.2f USD): held for a human" % cap_usd)
+            if not self.store.claim_release(pid, "auto:cooldown"):
+                return "skipped", "claimed elsewhere or denied"
+            # the money moves NOW: book its spend at release time, not the original (held) timestamp, so the
+            # rolling windows count it in the current hour. the original request time is preserved in the audit log.
+            self.store.update_payment(pid, ts=now)
         # record the release BEFORE sending: no money moves without a durable audit record.
         seq = self.audit.append("auto_released_after_cooldown", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
                                 detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked)})
