@@ -180,9 +180,12 @@ class Store:
         return dict(r) if r else None
 
     def idem_put(self, agent_id, key, fingerprint, payment_id):
+        """Reserve this idempotency key. Returns True if THIS caller won the reservation, False if another
+        caller already holds it (across processes sharing the DB). The caller must only send when it won."""
         with self.lock:
-            self.db.execute("INSERT OR IGNORE INTO idempotency (agent_id, idem_key, payment_id, fingerprint) VALUES (?,?,?,?)", (agent_id, key, payment_id, fingerprint))
+            cur = self.db.execute("INSERT OR IGNORE INTO idempotency (agent_id, idem_key, payment_id, fingerprint) VALUES (?,?,?,?)", (agent_id, key, payment_id, fingerprint))
             self.db.commit()
+            return cur.rowcount == 1
 
     def idem_set_response(self, agent_id, key, response_json):
         with self.lock:

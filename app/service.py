@@ -404,9 +404,15 @@ class Service:
             return self._hold_for_human(p, "re-check now freezes it: " + reason)
         if not self.store.claim_release(pid, "auto:cooldown"):
             return "skipped", "claimed elsewhere or denied"
+        # record the release BEFORE sending: no money moves without a durable audit record.
+        seq = self.audit.append("auto_released_after_cooldown", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
+                                detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked)})
+        if seq is None:
+            self.store.update_payment(pid, status="frozen", decided_by=None)
+            return self._hold_for_human(p, "audit log unavailable: cooldown release not recorded, held for a human")
         res = self._send(pid, cur["recipient"], fmt_amount(cur["amount"], cur["currency"]), cur["currency"], cur["memo"] or "")
-        self.audit.append("auto_released_after_cooldown", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
-                          detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked), "result": res.get("status")})
+        self.audit.append("auto_released_after_cooldown_result", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
+                          detail={"payee": cur["payee"], "result": res.get("status")})
         if res.get("status") == "sent":
             self._rep_contribute(self.store.payment(pid), "executed")
         return "released", res.get("status", "")
@@ -506,7 +512,8 @@ class Service:
                 except Exception as err:                     # the gate itself broke: that is a freeze, never an allow
                     tier, kind, reason, crashed = "freeze", "degradation", "gate error (%s): fail-closed" % type(err).__name__, True
                 mode = pol["mode"]
-                platform_breach = self.platform_cap is not None and amount > self.platform_cap
+                amount_usd = amount * (txn.get("fx") or 1.0)        # the platform cap is in USD; compare USD-normalized, like the gate's hard_cap
+                platform_breach = self.platform_cap is not None and amount_usd > self.platform_cap
                 # shadow mode suppresses enforcement for ordinary classifier freezes only.
                 # the two hard safety stops are NEVER shadowed: the operator's platform cap, and a gate crash.
                 hard_stop = platform_breach or crashed
@@ -533,9 +540,16 @@ class Service:
                        "risk": G.risk_score(tier, kind, on_cycle=bool((cadence or {}).get("on_cycle"))), "llm_flag": None,
                        "mode": mode, "enforced": 1 if enforced else 0, "policy_hash": pol["hash"],
                        "release_at": (now + (pol["knobs"]["cooldown_s"] or 0.0)) if (held and reason.startswith("cooling-off:")) else None}
-                self.store.insert_payment(row)
+                won_reservation = True
                 if rid:
-                    self.store.idem_put(agent, rid, fp, pid)
+                    won_reservation = self.store.idem_put(agent, rid, fp, pid)
+                    if not won_reservation:
+                        # another worker already reserved this idempotency key: do not insert or send a second payment.
+                        prev = self.store.idem_get(agent, rid)
+                        if prev and prev.get("response_json"):
+                            return {**json.loads(prev["response_json"]), "duplicate": True}
+                        return {"decision": "in_progress", "status": "in_progress", "payment_id": prev["payment_id"] if prev else None, "duplicate": True}
+                self.store.insert_payment(row)
                 seq = self.audit.append("decision", "gate", agent_id=agent, payment_id=pid, mode=mode,
                                         detail={"verdict": tier, "enforced": enforced, "score_kind": kind, "reason": reason[:300], "payee": r["payee"],
                                                 "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]})
@@ -680,10 +694,20 @@ class Service:
         p = self.store.payment(payment_id)
         if not p or p["status"] != "frozen":
             return {"ok": False, "reason": "payment is not frozen"}
+        # the operator's platform cap is a hard USD ceiling that NOTHING may cross, not even a manual release.
+        cap_usd = p["amount"] * (fxmod.to_usd_rate(p["currency"]) or 1.0)
+        if self.platform_cap is not None and cap_usd > self.platform_cap:
+            self.audit.append("release_refused", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id,
+                              detail={"reason": "over platform cap", "amount_usd": round(cap_usd, 2), "platform_cap": self.platform_cap})
+            return {"ok": False, "reason": "release would exceed the platform cap (%.2f USD > %.2f): raise PAYCANARY_PLATFORM_CAP to release this" % (cap_usd, self.platform_cap)}
         if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40)):          # atomic claim: only one of release / deny / sweep wins a frozen payment
             return {"ok": False, "reason": "payment is not frozen"}
-        self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
-                          detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
+        seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
+                                detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
+        if seq is None:
+            # no durable record of the release: do not send. put the payment back on the operator's queue.
+            self.store.update_payment(payment_id, status="frozen", decided_by=None)
+            return {"ok": False, "reason": "audit log unavailable: release not recorded, so nothing was sent (payment stays frozen)"}
         res = self._send(payment_id, p["recipient"], fmt_amount(p["amount"], p["currency"]), p["currency"], p["memo"] or "")
         if res.get("status") == "sent":
             self._rep_contribute(self.store.payment(payment_id), "executed")
