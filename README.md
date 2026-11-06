@@ -2,12 +2,12 @@
 
 > **PayCanary sits between payments. Normal ones pass through; anything questionable is held while deterministic checks gather the evidence, and an LLM explains it in plain language — but the AI can never move money itself.**
 
-**A stateful, policy-driven payment firewall for AI agents.** It sits in the payment path (in-path, fail-closed, default-deny on any error), judges each payment against that agent's whole behavioural history rather than one transaction at a time (stateful inspection), and keeps a tamper-evident audit trail. The paying agent never holds the PayPal credentials.
+**A stateful, policy-driven payment firewall.** It sits in the payment path (in-path, fail-closed, default-deny on any error), judges each payment against the payer's whole behavioural history rather than one transaction at a time (stateful inspection), and keeps a tamper-evident audit trail. It guards any payer; a timely, sharp case is the autonomous AI agent spending on its own, where the payer never holds the PayPal credentials.
 
 Built for the PayPal AI Hackathon (Oct 1 – Nov 12, 2026). **PayPal sandbox only.**
 
 ## What it is, and why
-AI agents are about to spend real money on people's behalf, and almost nothing checks those payments. The usual guard is a spending limit, but a limit only stops what you already thought to forbid. It does nothing about the payment that is inside every rule and still wrong: a payee the agent was never told to pay, a brand-new account with no history, a slow drain trained to look normal.
+Money moves out of accounts all day, and almost nothing checks the payment that is inside every rule and still wrong: a payee that was never supposed to be paid, a brand-new account with no history, a slow drain trained to look normal. The usual guard is a spending limit, but a limit only stops what you already thought to forbid. The sharpest version of this problem today is the autonomous AI agent spending on someone's behalf — it can be prompt-injected, tricked, or simply mistaken, and a limit does not catch any of that — but the same hole is open to any payer.
 
 PayCanary sits in the payment path, in front of PayPal Payouts:
 
@@ -15,7 +15,11 @@ PayCanary sits in the payment path, in front of PayPal Payouts:
 - **Anything that looks off is held.** Deterministic checks gather the evidence (domain age, scam-feed matches, whether it matches what the agent said it would do) and decide. An LLM (Claude Haiku) then explains in plain language why it is worth a look, and it is surfaced for a decision.
 - **A held payment is cleared only by a person or a strict rule that re-checks the evidence, never by the AI.** Every decision is written to a hash-chained, tamper-evident audit log.
 
-**What the AI does and does not do.** Deterministic rules gather the evidence and decide. The AI (Claude Haiku) writes the plain-language explanation, and it can only add friction: it can flag an allowed payment for a human to look at, never the other way round. It cannot freeze, release, send or un-freeze a payment, and nothing in the shipped code gives it a path to. Only a person, or a strict rule that re-checks the evidence, clears a held payment. There is no code path for the AI to release a payment, so a prompt injection cannot make it release one. The paying agent never holds the PayPal credentials, so if PayCanary is down no money moves (provided the agent cannot read them; see "Security model").
+**Who does what — the three roles.** The **deterministic gate** gathers the evidence, decides, and **freezes** anything off-pattern. That is the core of PayCanary, and it is the only thing that freezes. The **AI** (Claude Haiku) then **explains** the gate's decision in plain language, and can only *add* friction — it can flag an allowed payment for a human to look at, never wave one through. The **human operator releases** a held payment (or a strict rule that re-checks the evidence does). So: the gate freezes, the AI explains and flags, the human releases.
+
+The AI has no authority over money: it cannot freeze, release, send or un-freeze a payment, and nothing in the shipped code gives it a path to. Because there is no code path for the AI to release a payment, a prompt injection cannot make it release one. The paying party never holds the PayPal credentials, so if PayCanary is down no money moves (provided the credentials can't be read; see "Security model").
+
+*Roadmap, not shipped:* today the AI's authority is deliberately minimal — flag-for-review only. As the model earns trust in production, that boundary is designed to move; the shipped build keeps it at zero on purpose.
 
 ## Who clears a held payment
 PayCanary hands a held payment and its evidence to an **operator**: whoever owns the account. For a person, themselves; for a business, their fraud team, advisors, platform or their own AI. Today that is one operator credential (a person or a system can hold it) with API, dashboard and signed-webhook access to the held payment and its evidence. Named operators with individual identities and roles are roadmap, not shipped.
