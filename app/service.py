@@ -500,15 +500,19 @@ class Service:
                     fe = self._fanout_evidence(hist, r["payee"], r["recipient_email"], now)
                     if fe is not None:
                         txn["fanout_evidence"] = fe
+                crashed = False
                 try:
                     tier, kind, reason = G.classify(txn, hist)
                 except Exception as err:                     # the gate itself broke: that is a freeze, never an allow
-                    tier, kind, reason = "freeze", "degradation", "gate error (%s): fail-closed" % type(err).__name__
+                    tier, kind, reason, crashed = "freeze", "degradation", "gate error (%s): fail-closed" % type(err).__name__, True
                 mode = pol["mode"]
                 platform_breach = self.platform_cap is not None and amount > self.platform_cap
-                enforced = not (tier == "freeze" and mode == "shadow" and not platform_breach)      # the operator's platform cap is never shadowed
-                if tier == "freeze" and platform_breach and mode == "shadow":
-                    reason += " (platform cap is enforced even in shadow mode)"
+                # shadow mode suppresses enforcement for ordinary classifier freezes only.
+                # the two hard safety stops are NEVER shadowed: the operator's platform cap, and a gate crash.
+                hard_stop = platform_breach or crashed
+                enforced = not (tier == "freeze" and mode == "shadow" and not hard_stop)
+                if tier == "freeze" and mode == "shadow" and hard_stop:
+                    reason += " (platform cap is enforced even in shadow mode)" if platform_breach else " (gate errors are enforced even in shadow mode)"
                 try:
                     cadence = hist.cadence(r["payee"], now)
                     txn.update({"velocity_60s": len(hist.attempts_in_window(now)), "first_seen_payee": r["payee"] not in hist.payees,
@@ -532,9 +536,16 @@ class Service:
                 self.store.insert_payment(row)
                 if rid:
                     self.store.idem_put(agent, rid, fp, pid)
-                self.audit.append("decision", "gate", agent_id=agent, payment_id=pid, mode=mode,
-                                  detail={"verdict": tier, "enforced": enforced, "score_kind": kind, "reason": reason[:300], "payee": r["payee"],
-                                          "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]})
+                seq = self.audit.append("decision", "gate", agent_id=agent, payment_id=pid, mode=mode,
+                                        detail={"verdict": tier, "enforced": enforced, "score_kind": kind, "reason": reason[:300], "payee": r["payee"],
+                                                "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]})
+                if seq is None and not held:
+                    # the decision could not be written to the audit log: do not let money move without a record. fail closed.
+                    reason = "audit log unavailable: fail-closed (nothing sent until the decision can be recorded)"
+                    tier, kind, held, enforced = "freeze", "degradation", True, True
+                    self.store.update_payment(pid, status="frozen", verdict="freeze", score_kind="degradation",
+                                              reason=reason, enforced=1, decided_by="goalie")
+                    row.update(status="frozen", verdict="freeze", score_kind="degradation", reason=reason, enforced=1)
                 if held and G.is_identity_freeze(reason):               # payee-identity freezes only; cap/velocity/amount freezes are about the agent
                     self._rep_contribute(row, "identity_freeze")
         except Exception as err:                             # no verdict reached (store down, bug): block the money move
