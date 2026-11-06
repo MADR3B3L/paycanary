@@ -392,7 +392,8 @@ class Service:
             old = json.loads(cur["event_json"] or "{}")
             hist = self._history(agent, now, (cur["recipient"], cur["payee"], cur["currency"]))
             txn = {k: old.get(k) for k in ("kind", "agent", "payee", "recipient", "amount", "currency", "memo", "hour", "stated_intent_payees", "intent_id", "require_intent")}
-            txn.update(ts=now, cooloff_released=True)                                # judge it as a payment made now, with the ORIGINAL plan, minus the cooling-off rule itself
+            txn.update(ts=now, cooloff_released=True,                                # judge it as a payment made now, with the ORIGINAL plan, minus the cooling-off rule itself
+                       fx=fxmod.to_usd_rate(cur["currency"]) or 1.0)                 # re-resolve FX so caps are compared in USD, not treated as USD
             net = self._network(cur["recipient"], cur["payee"], now)
             if net:
                 txn["network"] = net
@@ -400,8 +401,11 @@ class Service:
             if evn:
                 txn["evidence"] = evn
             tier, kind, reason = G.classify(txn, hist)
+            cap_usd = float(cur["amount"]) * (txn["fx"])                             # the platform cap is a hard USD ceiling nothing crosses, not even a cooldown auto-release
         if tier == "freeze":
             return self._hold_for_human(p, "re-check now freezes it: " + reason)
+        if self.platform_cap is not None and cap_usd > self.platform_cap:
+            return self._hold_for_human(p, "re-check now exceeds the platform cap (%.2f USD): held for a human" % cap_usd)
         if not self.store.claim_release(pid, "auto:cooldown"):
             return "skipped", "claimed elsewhere or denied"
         # record the release BEFORE sending: no money moves without a durable audit record.
@@ -544,12 +548,19 @@ class Service:
                 if rid:
                     won_reservation = self.store.idem_put(agent, rid, fp, pid)
                     if not won_reservation:
-                        # another worker already reserved this idempotency key: do not insert or send a second payment.
+                        # another caller already reserved this idempotency key: do not insert or send a second payment.
                         prev = self.store.idem_get(agent, rid)
+                        if prev and prev.get("fingerprint") and prev["fingerprint"] != fp:
+                            return {"decision": "reject", "status": "idempotency_conflict", "reason": "this PayPal-Request-Id was already used with different parameters"}
                         if prev and prev.get("response_json"):
                             return {**json.loads(prev["response_json"]), "duplicate": True}
                         return {"decision": "in_progress", "status": "in_progress", "payment_id": prev["payment_id"] if prev else None, "duplicate": True}
-                self.store.insert_payment(row)
+                try:
+                    self.store.insert_payment(row)
+                except Exception:
+                    if rid and won_reservation:
+                        self.store.idem_del(agent, rid, pid)       # the reservation points at a payment that does not exist: release it so a retry is not stranded
+                    raise
                 seq = self.audit.append("decision", "gate", agent_id=agent, payment_id=pid, mode=mode,
                                         detail={"verdict": tier, "enforced": enforced, "score_kind": kind, "reason": reason[:300], "payee": r["payee"],
                                                 "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]})

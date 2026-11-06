@@ -120,6 +120,19 @@ class ShadowHardStops(unittest.TestCase):
         self.assertTrue(out_b.get("duplicate"))
         self.assertEqual(len(pp.calls), 1)
 
+    def test_same_key_different_payload_across_workers_is_a_conflict(self):
+        # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
+        store = Store()
+        pp = FakePayPal()
+        a = Service(store, pp, clock=lambda: 1_700_000_000.0, default_require_intent=False,
+                    default_hard_cap=None, default_mode="enforce")
+        b = Service(store, pp, clock=lambda: 1_700_000_000.0, default_require_intent=False,
+                    default_hard_cap=None, default_mode="enforce")
+        a.pay(req(payee="v1", amount="5.00"), request_id="K1")
+        out_b = b.pay(req(payee="v2", amount="9.00"), request_id="K1")   # same key, different payload
+        self.assertEqual(out_b.get("status"), "idempotency_conflict")
+        self.assertEqual(len(pp.calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

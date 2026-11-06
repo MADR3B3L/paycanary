@@ -76,6 +76,22 @@ class Flow(unittest.TestCase):
         self.assertIn("auto_released_after_cooldown", [r["event"] for r in s.audit.rows(limit=200)])
         self.assertEqual(s.release_due(), []); self.assertEqual(len(pp.calls), 1)                                                      # idempotent: never a second payout
 
+    def test_cooldown_release_respects_usd_platform_cap_for_foreign_currency(self):
+        # EUR 99 (~USD 107) held in cooldown; lower the USD platform cap to 100 before the window ends.
+        # The auto-release must NOT send: the cap is a hard USD ceiling, not native-currency units.
+        s, pp, t, sent = mkc(platform_cap=100000.0)
+        out, row = held_payment(s, t, amount="99.00", payee="EuroVendor", email="pay@eurovendor-clean.com")
+        # re-stamp as a EUR payment with clean evidence already gathered
+        import json as _json
+        ev = _json.loads(row["event_json"]); ev["currency"] = "EUR"
+        s.store.update_payment(out["payment_id"], currency="EUR", event_json=_json.dumps(ev),
+                               evidence_json=_json.dumps({"hint": "none", "checked": ["domain_age_days", "blocklist"]}))
+        s.platform_cap = 100.0                                   # operator lowers the ceiling below ~USD 107
+        t[0] += 1801
+        res = s.release_due()
+        self.assertEqual([r[1] for r in res], ["held"])         # held for a human, not auto-released
+        self.assertEqual(pp.calls, [])                          # nothing sent over the USD cap
+
     def test_adverse_evidence_keeps_it_held_for_a_human(self):
         s, pp, t, sent = mkc(Net(feed_hosts=["bad-newco.com"]))
         out, row = held_payment(s, t, email="pay@bad-newco.com"); t[0] += 1801

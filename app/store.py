@@ -187,6 +187,13 @@ class Store:
             self.db.commit()
             return cur.rowcount == 1
 
+    def idem_del(self, agent_id, key, payment_id):
+        """Release a reservation this caller made but could not complete (its payment insert failed), so a retry
+        is not stranded. Only removes the row if it still points at THIS caller's payment_id (never another's)."""
+        with self.lock:
+            self.db.execute("DELETE FROM idempotency WHERE agent_id=? AND idem_key=? AND payment_id=?", (agent_id, key, payment_id))
+            self.db.commit()
+
     def idem_set_response(self, agent_id, key, response_json):
         with self.lock:
             self.db.execute("UPDATE idempotency SET response_json=? WHERE agent_id=? AND idem_key=?", (response_json, agent_id, key))
