@@ -1,0 +1,19 @@
+{"kind": "agent_config", "agent": "bill-payer-bot", "hard_cap": 2000.0, "active_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}
+{"kind": "history", "payee": "AWS", "amount": 89.0, "ts": 1000.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 4600.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 60.0, "ts": 8200.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 95.0, "ts": 11800.0, "hour": 10}
+{"kind": "history", "payee": "Twilio", "amount": 48.0, "ts": 15400.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 110.0, "ts": 19000.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 60.0, "ts": 22600.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 26200.0, "hour": 10}
+{"kind": "history", "payee": "Twilio", "amount": 52.0, "ts": 29800.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 88.0, "ts": 33400.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 72.0, "ts": 37000.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 40600.0, "hour": 10}
+{"payee": "AWS", "amount": 101.0, "ts": 200000.0, "hour": 11, "stated_intent_payees": ["AWS"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 200100.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "Vercel", "amount": 66.0, "ts": 200200.0, "hour": 14, "stated_intent_payees": ["Vercel"], "kind": "txn"}
+{"payee": "Cloudflare", "amount": 45.0, "ts": 200300.0, "hour": 15, "stated_intent_payees": ["Cloudflare"], "kind": "txn"}
+{"payee": "AWS", "amount": 180.0, "ts": 200400.0, "hour": 16, "stated_intent_payees": ["AWS"], "kind": "txn"}
+{"payee": "Twilio", "amount": 50.0, "ts": 200500.0, "hour": 10, "stated_intent_payees": ["Twilio"], "kind": "txn"}

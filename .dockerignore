@@ -1,0 +1,11 @@
+.git
+.venv
+.env
+.env.*
+!.env.example
+*.sqlite3
+.paycanary_tokens.json
+__pycache__
+docs
+tests
+tools

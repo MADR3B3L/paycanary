@@ -1,0 +1,11 @@
+# One command: `docker compose up`, then open http://localhost:8000/ and paste the operator token printed in the log.
+# Offline demo: no keys, simulated payouts. Published on localhost only; the data volume keeps the demo database.
+services:
+  paycanary:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - paycanary-data:/data
+volumes:
+  paycanary-data:

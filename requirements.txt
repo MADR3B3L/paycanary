@@ -1,0 +1,5 @@
+# Runtime dependencies — exactly what the shipped app imports. Tested on Python 3.14 (also run on 3.11/3.13: see INSTALL notes).
+# The offline demo and the live PayPal/Stripe/Haiku paths all use only these plus the standard library:
+# the Anthropic and PayPal/Stripe calls go through urllib, so there is NO anthropic/httpx/requests runtime dependency.
+fastapi==0.162.0
+uvicorn==0.54.0

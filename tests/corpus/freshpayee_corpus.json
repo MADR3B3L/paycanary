@@ -1,0 +1,170 @@
+[
+{
+"label": "mule",
+"name": "Acme Payments LLC",
+"recipient": "payout@mailinator.com",
+"tier1": {},
+"note": "disposable inbox -> HELD inline (Tier-0)",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Global Tech Ltd",
+"recipient": "x@guerrillamail.com",
+"tier1": {},
+"note": "disposable inbox -> HELD inline (Tier-0)",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Microsoft Corporation",
+"recipient": "ms-billing@gmail.com",
+"tier1": {},
+"note": "business->freemail: FLAGGED only (review)",
+"expect": "flagged"
+},
+{
+"label": "mule",
+"name": "Stripe Payments Inc",
+"recipient": "stripe.payouts@yahoo.com",
+"tier1": {},
+"note": "business->freemail: FLAGGED only (review)",
+"expect": "flagged"
+},
+{
+"label": "mule",
+"name": "Nimbus Cloud LLC",
+"recipient": "ap@nimbus-cloud-pay.example",
+"tier1": {
+"domain_age_days": 2,
+"mx_present": false
+},
+"note": "2-day domain + no MX -> HELD (Tier-1 decorates)",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Vertex Labs",
+"recipient": "pay@vertex-labs-invoice.example",
+"tier1": {
+"domain_age_days": 4,
+"registry_found": false
+},
+"note": "4-day domain + no registry -> HELD",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Quick Refund Co",
+"recipient": "refunds@refund-portal.example",
+"tier1": {
+"blocklist_hit": true,
+"blocklist_source": "Phishing Army"
+},
+"note": "in a phishing feed (HARD -> freeze)",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Shell Entity",
+"recipient": "ops@sanctioned.example",
+"tier1": {
+"sanctions_exact": true
+},
+"note": "exact sanctions (HARD, logic)",
+"expect": "held"
+},
+{
+"label": "mule",
+"name": "Payables Group LLC",
+"recipient": "payables@10minutemail.com",
+"tier1": {
+"domain_age_days": 1
+},
+"note": "disposable + 1-day domain -> HELD",
+"expect": "held"
+},
+{
+"label": "legit",
+"name": "Acme Robotics",
+"recipient": "ap@acmerobotics.com",
+"tier1": {
+"domain_age_days": 1400,
+"mx_present": true,
+"registry_found": true
+},
+"note": "",
+"expect": null
+},
+{
+"label": "legit",
+"name": "Blue Harbor Design",
+"recipient": "invoices@blueharbor.design",
+"tier1": {
+"domain_age_days": 900,
+"mx_present": true,
+"registry_found": true
+},
+"note": "",
+"expect": null
+},
+{
+"label": "legit",
+"name": "Jane Smith",
+"recipient": "jane.smith@gmail.com",
+"tier1": {
+"domain_age_days": 9000,
+"mx_present": true
+},
+"note": "a person paid at gmail: NOT a mismatch",
+"expect": null
+},
+{
+"label": "legit",
+"name": "Northwind Traders",
+"recipient": "billing@northwind.co.uk",
+"tier1": {
+"domain_age_days": 3200,
+"mx_present": true,
+"registry_found": true
+},
+"note": "",
+"expect": null
+},
+{
+"label": "legit",
+"name": "Contoso",
+"recipient": "accounts@contoso.io",
+"tier1": {
+"domain_age_days": 600,
+"mx_present": true,
+"registry_found": true
+},
+"note": "",
+"expect": null
+},
+{
+"label": "legit",
+"name": "Fresh Start Bakery",
+"recipient": "pay@freshstartbakery.com",
+"tier1": {
+"domain_age_days": 20,
+"mx_present": true,
+"registry_found": true
+},
+"note": "legit but 20-day domain: young ALONE must not flag",
+"expect": null
+},
+{
+"label": "residue",
+"name": "Legit-Looking Front LLC",
+"recipient": "ap@aged-front.example",
+"tier1": {
+"domain_age_days": 400,
+"mx_present": true,
+"registry_found": true
+},
+"note": "attacker who BOUGHT a clean footprint: O9 cannot catch; bounded by O7/O2, not by evidence",
+"expect": null
+}
+]

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>
+/* Theme resolver (runs before first paint). Order: ?theme= URL override, then the saved choice, then the system setting, then Day. ?theme=light|dark are aliases of day|night. Storage may be blocked: every access is guarded. */
+(function () {
+  var map = { day: 'day', light: 'day', night: 'night', dark: 'night' }, q = (location.search.match(/[?&]theme=([a-z]+)/) || [])[1], t = map[q] || null, src = 'url';
+  if (!t) { src = 'saved'; try { t = map[localStorage.getItem('pc_theme')] || null; } catch (e) { t = null; } }
+  if (!t) { src = 'system'; try { t = matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day'; } catch (e) { t = 'day'; } }
+  document.documentElement.dataset.theme = t; document.documentElement.dataset.themeSrc = src;
+})();
+</script>
+<title>PayCanary</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-quartz.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600&display=swap">
+<style>
+/* PayCanary operator console: restraint. Colour has a job: neutrals do structure; canary = brand + the one primary action + focus + active tab; rail inks mark WHICH rail (first 64px of a row, lens, strip, dialog strip, tab/favicon);
+   red/amber/green mark decision state only (dot + word). Spec: PAYCANARY_AESTHETIC_PASS_v1 (v1.1 wins). Visual only. */
+:root,:root[data-theme=day]{color-scheme:light;--bg:#F5F7F8;--panel:#FFFFFF;--panel2:#EEF3F5;--sel:#E3ECF0;--ink:#0F2236;--mute:#516070;--line:#DDE4EA;--line2:#DDE4EA;--card:#DDE4EA;--ctl:#7C8C9E;
+  --brand:#F5C518;--brand-ink:#0F2236;--allow:#176E33;--review:#974B00;--freeze:#B7231A;--dot-allow:#34C759;--dot-review:#FF9500;--dot-freeze:#FF3B30;--freeze-fill:#B7231A;--on-freeze:#FFFFFF;
+  --focus:#0F2236;--focus-gap:#FFFFFF;--tab-line:#0F2236;--shadow-card:0 1px 2px rgba(15,34,54,.06),0 8px 24px rgba(15,34,54,.06);--shadow:0 12px 32px rgba(15,34,54,.14);--scrim:rgba(15,34,54,.35);--r:12px;
+  --pp:#005BB8;--pp-ink:#095DBB;--st:#5B35E8;--st-ink:#6B3FD6;--prov-unknown:#516070;--wash:7%;--sel-ov:rgba(15,34,54,.12);--hov-ov:rgba(15,34,54,.05);
+  --font:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--wordmark:Poppins,Inter,system-ui,sans-serif}
+:root[data-theme=night]{color-scheme:dark;--bg:#05090F;--panel:#0B121B;--panel2:#111B27;--sel:#16222F;--ink:#E8EEF5;--mute:#98A8BA;--line:#1B2836;--line2:#1B2836;--card:#1B2836;--ctl:#5B6B7E;
+  --allow:#30D158;--review:#FF9F0A;--freeze:#FF837C;--dot-allow:#30D158;--dot-review:#FF9F0A;--dot-freeze:#FF453A;--freeze-fill:#FF453A;--on-freeze:#05090F;
+  --focus:#F5C518;--focus-gap:transparent;--tab-line:#F5C518;--shadow-card:none;--shadow:none;--scrim:rgba(0,0,0,.6);
+  --pp-ink:#5AB0FF;--st-ink:#BDA0FF;--prov-unknown:#98A8BA;--wash:9%;--sel-ov:rgba(232,238,245,.14);--hov-ov:rgba(232,238,245,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums slashed-zero}
+.wrap{max-width:1560px;margin:0 auto;padding:0 32px}
+header{display:flex;align-items:center;gap:16px;height:56px;margin:0 0 8px}
+.brand{display:flex;align-items:center;gap:10px}.brand svg{width:30px;height:30px;border-radius:9px;flex:none}
+.brand b{font:600 17px var(--wordmark);letter-spacing:.1px}
+.tag-line{color:var(--mute);font-size:12px;letter-spacing:.01em}
+.themebtn{margin-left:auto;width:44px;height:44px;display:inline-grid;place-items:center;border:1px solid var(--ctl);border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:background .12s ease-out}
+.themebtn:hover{background:var(--panel2)}.themebtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;grid-area:1/1}
+:root[data-theme=day] .i-moon,:root[data-theme=night] .i-sun{display:none}
+.sr{position:absolute;left:-9999px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+:focus-visible{box-shadow:0 0 0 2px var(--focus-gap)}
+/* metrics: numbers, not cards */
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:0 0 24px}
+.stat{padding:2px 20px;border-left:1px solid var(--line)}.stat:first-child{padding-left:0;border-left:0}
+.stat b{display:block;font-size:24px;font-weight:600;line-height:32px;letter-spacing:-.01em}
+.stat small{display:flex;align-items:center;gap:7px;color:var(--mute);font-size:12px;letter-spacing:.01em}
+.stat small i{width:6px;height:6px;border-radius:50%;background:var(--c,transparent);flex:none}
+.stat.k-allow{--c:var(--dot-allow)}.stat.k-review{--c:var(--dot-review)}.stat.k-freeze{--c:var(--dot-freeze)}
+.stat.k-shadow small span{border-bottom:1px dashed var(--mute)}
+/* toolbar */
+.bar{display:flex;align-items:center;gap:16px;margin:0 0 16px;flex-wrap:wrap}
+nav{display:inline-flex;gap:20px;border-bottom:1px solid var(--line)}
+nav button{font:inherit;font-size:13px;font-weight:500;padding:10px 0 9px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--mute);cursor:pointer;transition:color .12s ease-out,border-color .12s ease-out}
+nav button:hover{color:var(--ink)}nav button[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--tab-line)}
+.lens{display:inline-flex;gap:2px;padding:2px;border-radius:10px;border:1px solid var(--ctl)}
+.lens button{font:inherit;font-size:12.5px;min-height:34px;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:var(--mute);cursor:pointer;transition:background .12s ease-out,color .12s ease-out}
+.lens button:hover{color:var(--ink)}
+.lens button[aria-pressed=true]{background:var(--sel);color:var(--ink)}
+.lens button .n{color:var(--mute);font-size:12px}
+#q{margin-left:auto;width:100%;max-width:320px;height:34px;padding:0 12px 0 34px;border:1px solid var(--ctl);border-radius:8px;background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23516070' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>") 11px center no-repeat;color:var(--ink);font:inherit;font-size:13px}
+#q::placeholder{color:var(--mute)}
+:root[data-theme=night] #q{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%2398A8BA' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>")}
+/* inline notice (token / connection) */
+#banner{display:none;margin:0 0 12px;padding:0 12px;min-height:36px;align-items:center;gap:10px;border:1px solid var(--card);border-radius:8px;color:var(--ink);font-size:13px}
+#banner::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--review);flex:none}
+#tokform{display:none;margin:0 0 12px;gap:10px;align-items:center;flex-wrap:wrap;min-height:36px}
+#tokform label{color:var(--mute);font-size:12px}
+#tok{flex:1;min-width:220px;max-width:420px;height:34px;padding:0 10px;border:1px solid var(--ctl);border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:13px}
+/* rail strip (filtered view only) + table card */
+#railStrip{display:none;align-items:center;gap:12px;height:40px;margin:0 0 8px}
+#railStrip .rt{font-size:15px;font-weight:600}
+#railStrip .rs{color:var(--mute);font-size:12px}
+#railStrip button{margin-left:auto}
+#tablecard{box-shadow:var(--shadow-card);position:relative;border:1px solid var(--card);border-radius:var(--r);overflow:hidden;transition:opacity .1s ease-out}
+#tablecard.fade{opacity:0}
+#stage[data-provider] #tablecard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:3;background:var(--prov-ink)}
+#stage[data-provider=stripe] #tablecard::before{background:repeating-linear-gradient(90deg,var(--prov-ink) 0 6px,transparent 6px 9px)}
+#grid{height:calc(100vh - 290px);min-height:420px}
+#grid.ag-theme-quartz,#grid.ag-theme-quartz-dark{--ag-background-color:var(--panel);--ag-foreground-color:var(--ink);--ag-header-background-color:var(--panel);--ag-header-foreground-color:var(--mute);
+  --ag-border-color:var(--card);--ag-row-border-color:var(--line);--ag-odd-row-background-color:transparent;--ag-row-hover-color:var(--panel2);--ag-selected-row-background-color:var(--sel);
+  --ag-font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;--ag-font-size:13px;--ag-cell-horizontal-padding:12px;--ag-header-height:40px;--ag-borders:none;--ag-wrapper-border-radius:0;--ag-input-focus-border-color:var(--focus)}
+.ag-header-cell-text{font-size:12px;font-weight:500;letter-spacing:.01em}
+.ag-row{cursor:pointer;transition:background-color .12s ease-out}.ag-cell{white-space:nowrap;display:flex;align-items:center}.ag-cell-wrap-text{white-space:normal}
+.ag-row.row-new .ag-cell{animation:rowIn .18s ease-out both}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.num{font-variant-numeric:tabular-nums slashed-zero}
+.ag-cell-wrap-text{line-height:1.3}.ag-cell-wrap-text .ag-cell-value,.ag-cell-wrap-text>div{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-height:34px}
+/* decisions: dot + word, no pill, no bar */
+.dec{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+.dec i{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.dec.allow{--c:var(--dot-allow)}.dec.review{--c:var(--dot-review)}.dec.freeze{--c:var(--dot-freeze)}
+.dec.shadow{--c:var(--dot-review)}.dec.shadow i{background:transparent;border:2px dashed var(--c)}
+.rk{color:var(--mute)}.rk.mid{color:var(--review)}.rk.high{color:var(--freeze)}
+/* buttons: three levels */
+button.act{font:inherit;font-size:12.5px;font-weight:500;min-height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--ctl);background:transparent;color:var(--ink);cursor:pointer;transition:background .12s ease-out,border-color .12s ease-out}
+button.act:hover{border-color:var(--mute);background:var(--panel2)}button.act[disabled]{opacity:.5;cursor:wait}
+button.act.go{border-color:var(--ctl)}
+button.act.no{border-color:transparent;color:var(--freeze)}button.act.no:hover{text-decoration:underline;background:transparent}
+button.act.primary,#tokform button.act.go,#askYes{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
+button.act.primary:hover,#askYes:hover{background:var(--brand);filter:brightness(1.06)}
+#askYes.destructive{background:var(--freeze-fill);border-color:var(--freeze-fill);color:var(--on-freeze)}
+.more{width:34px;min-width:34px;padding:0;font-size:16px;line-height:1;color:var(--mute)}
+.menu{position:fixed;z-index:60;min-width:200px;padding:6px;border:1px solid var(--card);border-radius:10px;background:var(--panel);box-shadow:var(--shadow);animation:pop .16s ease-out}
+.menu button{display:flex;width:100%;min-height:44px;align-items:center;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.menu button:hover{background:var(--panel2)}.menu button.bad{color:var(--freeze)}
+/* firewall tab */
+#fw{display:none}#fw section{background:var(--panel);box-shadow:var(--shadow-card);border:1px solid var(--card);border-radius:var(--r);padding:20px 24px;margin:0 0 16px}
+#fw h2{font-size:15px;font-weight:600;margin:0 0 4px}#fw p.sub{margin:0 0 14px;color:var(--mute);font-size:12.5px;max-width:880px}
+.tag{display:inline-flex;gap:6px;align-items:center;margin:3px 8px 3px 0;padding:3px 6px 3px 12px;border-radius:999px;border:1px solid var(--ctl);color:var(--ink);font-size:12px;font-weight:500}
+.tag.bad{color:var(--freeze);padding-right:12px}
+.tag button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;padding:0 6px;opacity:.8}.tag button:hover{opacity:1}
+#fw select,#fw input{font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--ctl);border-radius:8px;background:var(--bg);color:var(--ink);margin-right:6px}
+.agentrow{padding:14px 0;border-top:1px solid var(--line)}.agentrow:first-of-type{border-top:0}.agentrow b{margin-right:12px;font-weight:600}.agentrow small{color:var(--mute)}
+/* drawer + dialog + toast */
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(500px,100vw);display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--card);padding:0;box-shadow:var(--shadow);z-index:20;animation:slideIn .16s ease-out}
+#drawer[hidden]{display:none}#drawer .dtop{padding:16px 24px 0}#drawer .dbody{flex:1;overflow:auto;padding:0 24px 20px}#drawer .dfoot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-top:1px solid var(--card);background:var(--panel)}#drawer h3{margin:12px 0 10px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+#drawer h4{margin:22px 0 8px;font-size:12px;color:var(--mute);font-weight:500;letter-spacing:.01em}
+#drawer .kv{display:grid;grid-template-columns:104px 1fr;gap:6px 12px;font-size:12.5px;padding:12px 14px;border:1px solid var(--card);border-radius:10px}
+#drawer .kv span:nth-child(odd){color:var(--mute)}#drawer .kv span:nth-child(even){word-break:break-all}
+#drawer pre{white-space:pre-wrap;word-break:break-word;font:11.5px/1.6 var(--font);margin:0;padding:12px 14px;border:1px solid var(--card);border-radius:10px;color:var(--mute)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:40;display:none;max-width:min(660px,calc(100vw - 32px));padding:10px 14px;border-radius:10px;border:1px solid var(--card);background:var(--panel);box-shadow:var(--shadow);font-size:13px}
+#toast.err{border-color:var(--freeze)}#toast.ok{border-color:var(--card)}#toast button{margin-left:12px}
+#ask{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:var(--scrim);animation:fade .12s ease-out}
+#ask .box{background:var(--panel);border:1px solid var(--card);border-radius:var(--r);padding:0 0 20px;max-width:min(500px,calc(100vw - 32px));box-shadow:var(--shadow);overflow:hidden;animation:pop .16s ease-out}
+#ask pre{white-space:pre-wrap;font:inherit;font-size:13.5px;margin:0;padding:16px 22px 18px}
+#ask .btns{display:flex;gap:10px;justify-content:flex-end;padding:0 22px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+#drawer .verdict{margin:0 0 4px;padding:10px 12px;border:1px solid var(--card);border-radius:10px;font-size:13px;line-height:1.5}
+#drawer .verdict b{font-weight:600}#drawer .verdict .dec{margin-right:8px;vertical-align:baseline}
+#drawer .rel{display:flex;width:100%;align-items:center;gap:10px;min-height:44px;margin:0 0 6px;padding:0 12px 0 0;border:1px solid var(--card);border-radius:9px;background:color-mix(in srgb,var(--prov-ink) var(--wash),var(--panel));color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;overflow:hidden}
+#drawer .rel:hover{border-color:var(--mute)}#drawer .rel.cur{box-shadow:inset 0 0 0 9999px var(--sel-ov);border-color:var(--mute);cursor:default}
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:var(--ink);text-decoration:underline;cursor:pointer}#drawer .rel .pedge{align-self:stretch}#drawer .rel .sp{margin-left:auto}
+#drawer details{margin:14px 0 0}#drawer summary{cursor:pointer;color:var(--mute);font-size:12px}#drawer details .kv{margin-top:8px}
+#drawer .checked{margin:10px 0 0;color:var(--mute);font-size:12px}
+.chat{border:1px solid var(--card);border-radius:12px;padding:10px 12px}
+.chat .sug{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}.chat .sug button{font:inherit;font-size:12px;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--ctl);background:transparent;color:var(--mute);cursor:pointer}.chat .sug button:hover{color:var(--ink);border-color:var(--mute)}
+.chat .msg{margin:6px 0;padding:8px 10px;border-radius:10px;background:var(--panel2);font-size:12.5px;white-space:pre-wrap;max-width:94%}.chat .msg.me{margin-left:auto;background:var(--sel)}
+.chat .askrow{display:flex;gap:6px;margin-top:8px}.chat .askrow input{flex:1;min-width:0;min-height:36px;font:inherit;font-size:13px;padding:0 10px;border-radius:8px;border:1px solid var(--ctl);background:var(--panel);color:var(--ink)}.chat .askrow input::placeholder{color:var(--mute)}.chat .askrow input:focus-visible,.chat .askrow .askgo:focus-visible{outline:2px solid var(--focus);outline-offset:2px}.chat .askrow .askgo{font:inherit;font-size:13px;min-height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--ctl);background:transparent;color:var(--ink);cursor:pointer}.chat .askrow .askgo:disabled{opacity:.5;cursor:default}
+.chat .wall{margin:0 0 6px}.chat .wall b{font-weight:600}.chat .det{border-top:1px solid var(--line);padding-top:6px}
+.chat .adv{margin-top:6px;color:var(--mute);font-size:11.5px}
+/* policy page */
+#fw .intro{margin:0 0 18px;color:var(--mute);font-size:13px;max-width:880px}#fw h1{font-size:20px;font-weight:600;margin:4px 0 4px;letter-spacing:-.01em}
+#fw h2 i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--c)}
+.rule{display:flex;gap:16px;padding:12px 0;border-top:1px solid var(--line)}.rule:first-of-type{border-top:0}.rule b{display:block;font-weight:600}.rule .when{color:var(--mute);font-size:12.5px}.rule .out{margin-left:auto;text-align:right;white-space:nowrap;font-size:12.5px;flex:none}
+#fw details{margin:0 0 16px}#fw summary{cursor:pointer;font-weight:500;padding:6px 0}
+#fw .rule details{margin:4px 0 0}.rule summary{font-size:12px;color:var(--mute);font-weight:400;padding:0}.rule details .when{margin-top:4px;max-width:880px}
+.tag.add{border-style:dashed;color:var(--mute);padding-right:12px}
+.muted{color:var(--mute);font-size:12px}
+footer{color:var(--mute);font-size:12px;padding:20px 0 28px;line-height:1.6}
+/* rail identity: chip with the full rail NAME (pill = PayPal, 5px rounded rect = Stripe, plain text, no logos) + band (solid vs dashed) + 11% row wash. Shape and band survive greyscale. */
+[data-provider=paypal]{--prov:var(--pp);--prov-ink:var(--pp-ink)}
+[data-provider=stripe]{--prov:var(--st);--prov-ink:var(--st-ink)}
+[data-provider=unknown]{--prov:transparent;--prov-ink:var(--prov-unknown)}
+.pchip{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 11px;font:600 12px/1 var(--font);letter-spacing:.01em;white-space:nowrap;background:var(--prov);color:#fff;border-radius:999px}
+[data-provider=stripe] .pchip{border-radius:5px}
+[data-provider=unknown] .pchip{background:transparent;color:var(--prov-unknown);border:1px dashed var(--prov-unknown)}
+.railcell{display:flex;align-items:center;gap:12px;height:100%;width:100%}
+.ag-cell.railc{padding-left:0!important}
+.pedge{display:block;flex:none;width:4px;align-self:stretch;background:var(--prov-ink)}
+[data-provider=stripe] .pedge{background:repeating-linear-gradient(180deg,var(--prov-ink) 0 6px,transparent 6px 9px)}
+/* whole-row wash: the rail ink at 11% over the panel. The name chip and the band carry the identity; the wash is the third cue. */
+/* theme-aware washes: Day 7%, Night 9% of the rail ink over the card, with precomputed fallbacks for engines without color-mix */
+.ag-row.rail-paypal{background-color:#eef4fa;background-color:color-mix(in srgb,var(--pp-ink) var(--wash),var(--panel))}
+.ag-row.rail-stripe{background-color:#f5f2fc;background-color:color-mix(in srgb,var(--st-ink) var(--wash),var(--panel))}
+:root[data-theme=night] .ag-row.rail-paypal{background-color:#122030;background-color:color-mix(in srgb,var(--pp-ink) var(--wash),var(--panel))}
+:root[data-theme=night] .ag-row.rail-stripe{background-color:#1b1f30;background-color:color-mix(in srgb,var(--st-ink) var(--wash),var(--panel))}
+/* selected row = the open payment: a neutral lift over the rail wash (ink at 9%, hover is the lighter 5% step) + a 2px focus-colour rule just inside the rail band. Mouse clicks show no per-cell focus box; keyboard focus gets a 2px ring on the row. */
+#grid.ag-theme-quartz,#grid.ag-theme-quartz-dark{--ag-row-hover-color:var(--hov-ov)}
+/* plain rgba overlay as an inset shadow: no gradient, no color-mix, same in every engine; the rail wash stays beneath it */
+.ag-row.row-open{box-shadow:inset 0 0 0 9999px var(--sel-ov)}
+.ag-row.row-open .ag-cell.railc::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:2px;background:var(--focus);z-index:2}
+.ag-cell.ag-cell-focus,.ag-cell.ag-cell-focus:not(.ag-cell-range-selected):focus-within{border-color:transparent!important;outline:none!important}
+.ag-row:has(.ag-cell:focus-visible){outline:2px solid var(--focus);outline-offset:-2px}
+button.act.go-paypal{border-color:var(--pp-ink);color:var(--pp-ink);border-radius:999px}button.act.go-stripe{border-color:var(--st-ink);color:var(--st-ink);border-radius:6px}
+button.act.go-paypal:hover{background:color-mix(in srgb,var(--pp-ink) 8%,transparent);border-color:var(--pp-ink)}button.act.go-stripe:hover{background:color-mix(in srgb,var(--st-ink) 8%,transparent);border-color:var(--st-ink)}
+[data-provider=unknown] .pedge{background:none;border-left:4px dashed var(--prov-unknown)}
+.pstrip{display:flex;align-items:center;gap:10px;min-height:32px;padding:0 20px;border-bottom:1px solid var(--card);font-weight:600;font-size:13px;color:var(--ink)}
+.pstrip .pname{color:var(--prov-ink)}
+.pband{display:flex;align-items:center;gap:10px;min-height:32px;padding:0 20px;border-bottom:1px solid var(--card);font-weight:600;font-size:13px}
+#drawer .pband{margin:0 0 0;padding:0}
+#ask .pband{margin:0}
+.pband .pname{color:var(--prov-ink)}
+.stat .pchip{display:none}
+@media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px}.stat:nth-child(odd){padding-left:0;border-left:0}.tag-line{display:none}#q{margin-left:0;max-width:none}#grid{height:calc(100vh - 420px)}.wrap{padding:0 16px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (forced-colors:active){.pchip{background:Canvas;color:CanvasText;border:2px solid CanvasText}button.act.go-paypal,button.act.go-stripe{border-color:CanvasText;color:CanvasText}.pedge{background:CanvasText!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><svg viewBox="0 0 160 160" role="img" aria-label="PayCanary mark"><rect width="160" height="160" rx="38" fill="#F5C518"/><g transform="translate(26,26) scale(1.6875)"><path fill="#16191d" d="M43.5 14c-6.8 0-12.5 4.7-14 11-4.2.6-7.9 2.6-10.8 5.6-.8.8-.2 2.1.9 2 2.3-.2 4.3.1 6 .8-1 1.6-1.6 3.5-1.6 5.6 0 .9-.1 1.7-1 2.6l-6.2 6.2c-1 1-.3 2.8 1.1 2.8H34c7.7 0 14-6.3 14-14v-4.3c3.3-1.6 5.6-5 5.6-8.9C53.6 18.3 49 14 43.5 14z"/><circle cx="45.5" cy="22.5" r="2.4" fill="#F5C518"/><path fill="#16191d" d="M52 20l9-3-6 5 6 2-9 0z"/></g></svg><b>PayCanary</b></div>
+  <span class="tag-line">payments, checked. Anything questionable waits for a human.</span>
+  <button id="themeBtn" type="button" class="themebtn"><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.9 1.9M16.8 16.8l1.9 1.9M18.7 5.3l-1.9 1.9M7.2 16.8l-1.9 1.9"/></svg><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z"/></svg></button>
+</header>
+<main>
+  <div id="banner" role="status"></div>
+  <form id="tokform">
+    <label for="tok">Operator token</label>
+    <input id="tok" type="password" autocomplete="off" placeholder="paste the operator token">
+    <button class="act go" type="submit">Unlock</button>
+  </form>
+  <section id="stage" data-lens="all">
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <nav aria-label="View"><button id="tabPay" aria-pressed="true">Payments</button><button id="tabFw" aria-pressed="false">Policy</button></nav>
+    <div class="lens" id="lens" role="group" aria-label="Provider lens"></div>
+    <div class="lens" id="attn" role="group" aria-label="Which payments to show"></div>
+    <span id="lensLive" class="sr" aria-live="polite"></span>
+    <input id="q" type="search" placeholder="Search payee, agent, reason, status..." aria-label="Search payments">
+  </div>
+  <div id="railStrip" role="region" aria-label="Active rail"></div>
+  <div id="tablecard"><div id="grid" class="ag-theme-quartz-dark" aria-label="Payment queue"></div></div>
+  <div id="fw" aria-label="Policy: how PayCanary decides"></div>
+  </section>
+  <aside id="drawer" aria-label="Payment detail" hidden></aside>
+  <div id="toast" role="alert" aria-live="assertive"></div>
+  <div id="ask" role="dialog" aria-modal="true" aria-label="Confirm"><div class="box"><pre id="askMsg"></pre><div class="btns"><button class="act" id="askNo">Cancel</button><button class="act" id="askYes">Confirm</button></div></div></div>
+</main>
+<footer>PayCanary is not endorsed by PayPal or Stripe. Narration is advisory text written after the decision. It has no power to release, send or allow a payment. Sandbox / test mode only; the offline demo's payouts are simulated (ids SIM-PP-... / SIM-ST-...).</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const tok = () => { try { return sessionStorage.getItem('pc_op') || ''; } catch (e) { return ''; } };
+const hdr = (extra) => Object.assign({ authorization: 'Bearer ' + tok() }, extra || {});
+function needToken(on) { $('#tokform').style.display = on ? 'flex' : 'none'; }
+$('#tokform').addEventListener('submit', (e) => { e.preventDefault(); try { sessionStorage.setItem('pc_op', $('#tok').value.trim()); } catch (x) {} $('#tok').value = ''; refresh(); });
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+// Dark-first (the brand look). ?theme=light opts into the light palette.
+// Theme: the resolver in <head> already set data-theme. Here: the toggle, persistence (guarded), live system-follow, and the ag-grid theme class.
+const themeNow = () => document.documentElement.dataset.theme === 'night' ? 'night' : 'day';
+function paintTheme() {
+  const t = themeNow(), g = $('#grid'), b = $('#themeBtn');
+  g.className = t === 'night' ? 'ag-theme-quartz-dark' : 'ag-theme-quartz';
+  const m = document.querySelector('meta[name=color-scheme]'); if (m) m.content = t === 'night' ? 'dark' : 'light';
+  const next = t === 'night' ? 'Day' : 'Night'; b.setAttribute('aria-label', 'Switch to ' + next + ' mode'); b.title = 'Switch to ' + next + ' mode';
+}
+function setTheme(t, save) {
+  document.documentElement.dataset.theme = t; paintTheme();
+  if (save) { document.documentElement.dataset.themeSrc = 'saved'; try { localStorage.setItem('pc_theme', t); } catch (e) { /* storage blocked: the choice lasts for this page view only */ } }
+}
+$('#themeBtn').onclick = () => setTheme(themeNow() === 'night' ? 'day' : 'night', true);
+try { const mq = matchMedia('(prefers-color-scheme: dark)'), on = () => { if (document.documentElement.dataset.themeSrc === 'system') setTheme(mq.matches ? 'night' : 'day', false); };
+  if (mq.addEventListener) mq.addEventListener('change', on); else if (mq.addListener) mq.addListener(on); } catch (e) { /* no system preference available: Day */ }
+paintTheme();
+
+
+// Provider identities (one map; the CSS above is keyed by data-provider). Unknown names never borrow PayPal's or Stripe's look.
+const PROVIDERS = { paypal: { code: 'PP', name: 'PayPal' }, stripe: { code: 'ST', name: 'Stripe' } };
+const provKey = (v) => (typeof v === 'string' && Object.prototype.hasOwnProperty.call(PROVIDERS, v)) ? v : 'unknown';
+const provInfo = (v) => PROVIDERS[provKey(v)] || { code: '??', name: 'Unknown rail' };
+function pchip(v) {
+  const i = provInfo(v), c = el('span', 'pchip', provKey(v) === 'unknown' ? 'Unknown' : i.name); c.setAttribute('role', 'img');
+  c.setAttribute('aria-label', 'Rail: ' + i.name); c.title = provKey(v) === 'unknown' ? 'no identity registered' : i.name; return c;
+}
+function pwrap(v, tag) { const w = el(tag || 'span'); w.dataset.provider = provKey(v); return w; }
+function pband(v, extra) {
+  const b = pwrap(v, 'div'); b.className = 'pband'; const i = provInfo(v);
+  b.append(pchip(v), el('span', null, extra || '')); return b;
+}
+function railRenderer(p) {
+  const w = pwrap(p.data.provider, 'div'); w.className = 'railcell';
+  w.append(el('span', 'pedge'), pchip(p.data.provider)); return w;
+}
+let lens = 'all';
+const lensPass = (r) => lens === 'all' || r.provider === lens;
+// "Needs attention" = anything the gate did not simply allow: frozen/held, flagged for review, or would-have-frozen in monitor mode.
+let attn = false;
+const needsAttention = (r) => r.status === 'frozen' || r.verdict === 'review' || r.verdict === 'freeze';
+const rowPass = (r) => lensPass(r) && (!attn || needsAttention(r));
+function buildAttn() {
+  const box = $('#attn'); box.replaceChildren();
+  [[true, 'Needs attention'], [false, 'All']].forEach(([k, label]) => {
+    const b = el('button'); b.setAttribute('aria-pressed', attn === k ? 'true' : 'false');
+    const n = lastRows.filter((r) => lensPass(r) && (!k || needsAttention(r))).length;
+    b.append(document.createTextNode(label + ' '), el('span', 'n', String(n))); b.setAttribute('aria-label', label + ', ' + n + ' payments');
+    b.onclick = () => { attn = k; buildAttn(); api.onFilterChanged(); syncSelection(); renderStats(); };
+    box.append(b);
+  });
+}
+function buildLens() {
+  const box = $('#lens'); box.replaceChildren();
+  [['all', 'All'], ['paypal', 'PayPal'], ['stripe', 'Stripe']].forEach(([k, label]) => {
+    const b = el('button'); b.setAttribute('aria-pressed', lens === k ? 'true' : 'false');
+    const n = lastRows.filter((r) => k === 'all' || r.provider === k).length;
+    if (k !== 'all') { b.dataset.provider = k; b.append(pchip(k)); } else b.append(document.createTextNode(label));
+    b.append(el('span', 'n', String(n)));
+    b.setAttribute('aria-label', label + ', ' + n + ' payments');
+    b.onclick = () => setLens(k);
+    box.append(b);
+  });
+}
+function setFavicon(v) {
+  const svg = v === 'paypal' ? "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23005BB8'/><text x='16' y='22' font-size='15' font-weight='800' text-anchor='middle' fill='white' font-family='monospace'>PP</text></svg>"
+    : v === 'stripe' ? "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='8,2 24,2 30,16 24,30 8,30 2,16' fill='%235B35E8'/><text x='16' y='21' font-size='13' font-weight='800' text-anchor='middle' fill='white' font-family='monospace'>ST</text></svg>"
+    : "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23F5C518'/></svg>";
+  let l = document.querySelector('link[rel=icon]'); if (!l) { l = document.createElement('link'); l.rel = 'icon'; document.head.append(l); }
+  l.href = 'data:image/svg+xml,' + svg;
+}
+const NOUN = { paypal: 'PayPal payouts', stripe: 'Stripe transfers' };
+// Rail identity at rest: the first 64px of every row + the lens counts. Filtered view adds ONE 40px strip (chip, name, show-all) and a 3px rule on the table card.
+function renderStage() {
+  const st = $('#stage'), strip = $('#railStrip'); strip.replaceChildren(); strip.style.display = 'none';
+  const fw = view === 'fw', key = fw ? 'all' : lens;
+  st.dataset.lens = fw ? 'rules' : lens;
+  if (fw || key === 'all') st.removeAttribute('data-provider'); else st.dataset.provider = provKey(key);
+  const rows = lastRows.filter((r) => key === 'all' || r.provider === key);
+  if (!fw && key !== 'all') {
+    strip.style.display = 'flex'; strip.dataset.provider = provKey(key);
+    const i = provInfo(key);
+    strip.append(pchip(key), el('span', 'rt', provKey(key) === 'unknown' ? 'Unknown rail: ' + String(key).slice(0, 30) : NOUN[key]),
+      el('span', 'rs', provKey(key) === 'unknown' ? 'Not a configured rail. Do not release until an operator assigns one.' : 'Rail is fixed when a payment is created'));
+    const all = el('button', 'act', 'Show all'); all.onclick = () => setLens('all'); strip.append(all);
+    strip.setAttribute('aria-label', 'Active rail: ' + i.name);
+  }
+  const nm = key === 'all' ? 'PayCanary' : (NOUN[key] || 'Unknown rail').replace(/^./, (c) => c.toUpperCase()) + ' · PayCanary';
+  document.title = nm; setFavicon(key === 'all' ? '' : key);
+  $('#lensLive').textContent = fw ? 'Firewall rules apply to every rail' : (key === 'all' ? 'Now viewing all rails, ' + lastRows.length + ' payments' : 'Now viewing ' + (NOUN[key] || 'an unknown rail') + ', ' + rows.length + ' payments');
+}
+function setLens(k) {
+  const card = $('#tablecard'); card.classList.add('fade');
+  setTimeout(() => { lens = k; buildLens(); buildAttn(); api.onFilterChanged(); syncSelection(); renderStats(); renderStage(); card.classList.remove('fade'); }, 100);
+}
+
+const MONITOR_TIP = 'Monitor mode: PayCanary would have frozen this, but it was only logged and allowed through so the rules can be tuned.';   // the one wording, used by the Decision cell and the stat label
+function decisionRenderer(p) {
+  const shadow = p.data.verdict === 'freeze' && p.data.enforced === 0;
+  const frozen = p.data.status === 'frozen';
+  const kind = shadow ? 'shadow' : (p.value === 'freeze' || frozen ? 'freeze' : p.value);
+  const word = shadow ? 'Would freeze' : kind === 'freeze' ? 'Frozen' : kind === 'review' ? 'Review' : 'Allowed';
+  const c = el('span', 'dec ' + kind); c.append(el('i'), document.createTextNode(word));
+  if (shadow) c.title = MONITOR_TIP;
+  return c;
+}
+function riskRenderer(p) {
+  const v = Math.max(0, Math.min(100, Math.round(p.value || 0)));
+  return el('span', 'rk num ' + (v >= 80 ? 'high' : v >= 60 ? 'mid' : ''), String(v));
+}
+// Plain-language phrasing of the engine's reason texts (patterns from app/gate.py). Unmatched reasons fall back to the raw text unchanged. Output is only ever set with textContent.
+const PLAIN_REASONS = [
+  [/not yet trusted.*structuring guard/i, 'Too much going to a new payee in a short time.'],
+  [/\(fan-out\)|fan-out onboarding/i, 'Many payments to new payees are adding up quickly.'],
+  [/structuring guard/i, 'Too much leaving in a short time.'],
+  [/over this agent's hard cap/i, 'Over this agent\'s spending limit.'],
+  [/NOT in the agent's stated intent/i, 'This payee isn\'t in what the agent said it would pay.'],
+  [/no live stated intent/i, 'The agent didn\'t say what it planned to pay.'],
+  [/first-ever payee/i, 'First payment to this payee.'],
+  [/off-cycle/i, 'Paid earlier or later than this bill\'s usual cycle.'],
+  [/^on cadence/i, 'On its usual schedule.'],
+  [/^known payee .* within this agent's norm/i, 'Known payee, normal amount.'],
+  [/imitates the known payee/i, 'This payee\'s name looks like one you already pay.'],
+  [/NEW destination/i, 'A known payee is being paid at a new address.'],
+  [/possible replay/i, 'The same payment was just made.'],
+  [/^NEW payee/i, 'New payee for a larger amount than usual.'],
+  [/new-payee burst/i, 'Repeated payments to a new payee within a minute.'],
+  [/rapid-fire/i, 'Too many payment attempts in a minute.'],
+  [/drain guard/i, 'Too much money leaving within a minute.'],
+  [/probation cap/i, 'Large payment to a payee that isn\'t proven yet.'],
+  [/cooling-off/i, 'First payment to a new payee, held while it is checked.'],
+  [/memo contains pressure/i, 'The memo uses pressure wording.'],
+  [/unusual time for this agent/i, 'Paid outside the hours this agent normally pays.'],
+  [/other payees/i, 'Much more than this agent pays its other payees.'],
+  [/escalat|historical max|SD from this agent|what '.*' has been paid/i, 'Larger than this agent or payee usually sees.'],
+  [/unparseable/i, 'The payment details could not be read.'],
+];
+function plainReason(raw) { const t = String(raw || ''); const m = PLAIN_REASONS.find(([re]) => re.test(t)); return m ? m[1] : t; }
+function evidenceOf(d) { try { return d.evidence_json ? JSON.parse(d.evidence_json) : null; } catch (e) { return null; } }
+function evidenceRenderer(p) {
+  const w = el('div'); const ev = evidenceOf(p.data); if (!ev) return w;
+  w.style.lineHeight = '1.3'; w.style.padding = '4px 0';
+  (ev.items && ev.items.length ? ev.items : (ev.detail || []).map((d) => ({ detail: d, severity: 'soft' }))).forEach((it) => {
+    const line = el('div', null, (it.severity === 'hard' ? '\u26A0 ' : '\u2022 ') + it.detail);
+    if (it.severity === 'hard') line.style.color = 'var(--freeze)'; else if (it.severity === 'info') line.style.color = 'var(--mute)';
+    w.append(line);
+  });
+  if (!ev.items || !ev.items.length) w.append(el('div', null, 'No adverse evidence found'));
+  return w;
+}
+let toastTimer = null;
+function toast(msg, kind, prov) {
+  const t = $('#toast'); t.replaceChildren(); if (prov) { const w = pwrap(prov); w.append(pchip(prov)); t.append(w, document.createTextNode(' ' + provInfo(prov).name + ': ')); } t.append(document.createTextNode(msg)); t.className = kind || '';
+  const x = el('button', 'act', 'Dismiss'); x.onclick = () => { t.style.display = 'none'; }; t.append(x);
+  t.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, kind === 'err' ? 20000 : 4000);
+}
+// In-page confirmation (the browser's native dialog is suppressed or auto-dismissed in embedded / headless browsers, which made Release and Report fraud look dead).
+function ask(message, prov, verb) {
+  return new Promise((resolve) => {
+    const box = $('#ask'); $('#askMsg').textContent = message; box.style.display = 'flex';
+    const old = box.querySelector('.pband'); if (old) old.remove();
+    if (prov) box.querySelector('.box').prepend(pband(prov, ({ Release: 'Releasing this payment', Report: 'Reporting fraud', Reject: 'Rejecting this payment', 'Confirm fraud': 'Confirming fraud' })[verb] || 'Confirm'));
+    $('#askYes').textContent = (verb || 'Confirm') + (prov ? ' (' + provInfo(prov).name + ')' : '');
+    $('#askYes').className = 'act' + (verb === 'Confirm fraud' || verb === 'Report' || verb === 'Reject' ? ' destructive' : '');
+    const done = (v) => { box.style.display = 'none'; $('#askYes').onclick = $('#askNo').onclick = null; document.removeEventListener('keydown', esc); resolve(v); };
+    const esc = (e) => { if (e.key === 'Escape') done(false); };
+    document.addEventListener('keydown', esc); $('#askYes').onclick = () => done(true); $('#askNo').onclick = () => done(false); $('#askNo').focus();
+  });
+}
+// One path for every operator action. Never silent: a 401, any HTTP error, or a 200 with ok:false (server refused, e.g. the payment is no longer frozen)
+// each show a persistent message; buttons are always re-enabled; success says what happened.
+async function act(path, body, label, btns, prov) {
+  (btns || []).forEach((b) => b.disabled = true);
+  let ok = false;
+  try {
+    const r = await fetch(path, { method: 'POST', headers: hdr({ 'content-type': 'application/json' }), body: JSON.stringify(body || {}) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) { needToken(true); toast('Not authorised: the operator token is missing or no longer valid. Paste it above, then try "' + label + '" again.', 'err'); }
+    else if (!r.ok) toast('Could not ' + label + ' (HTTP ' + r.status + (j.detail ? ': ' + (typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail)) : '') + ').', 'err');
+    else if (j.ok === false) toast('Could not ' + label + ': ' + (j.reason || 'the server refused it') + '.', 'err');
+    else { ok = true; toast('Done: ' + label + '.', 'ok', prov); }
+  } catch (e) { toast('Could not ' + label + ': cannot reach the PayCanary service (' + e.message + ').', 'err'); }
+  (btns || []).forEach((b) => b.disabled = false);
+  await refresh();
+  return ok;
+}
+function decide(id, verb, btns, label, prov) { return act('/api/payments/' + encodeURIComponent(id) + '/' + verb, {}, label || verb, btns, prov); }
+let openMenuEl = null, openMenuBtn = null;
+function closeMenu(restore) { if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; document.removeEventListener('keydown', menuKey, true); document.removeEventListener('mousedown', menuAway, true); if (restore && openMenuBtn) openMenuBtn.focus(); } }
+function menuAway(e) { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(false); }
+function menuKey(e) {
+  if (!openMenuEl) return; const items = [...openMenuEl.querySelectorAll('button')], i = items.indexOf(document.activeElement);
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(true); }
+  else if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const d = (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) ? -1 : 1; items[(i + d + items.length) % items.length].focus(); }
+}
+function openMenu(btn, items) {
+  closeMenu(false); const m = el('div', 'menu'); m.setAttribute('role', 'menu'); openMenuBtn = btn;
+  items.forEach((it) => { const b = el('button', it.bad ? 'bad' : '', it.label); b.setAttribute('role', 'menuitem'); b.setAttribute('aria-label', it.aria || it.label); b.onclick = () => { closeMenu(true); it.run(); }; m.append(b); });
+  const r = btn.getBoundingClientRect(); m.style.top = Math.min(r.bottom + 4, window.innerHeight - items.length * 46 - 16) + 'px'; m.style.left = Math.max(8, r.right - 210) + 'px';
+  document.body.append(m); openMenuEl = m; m.querySelector('button').focus(); document.addEventListener('keydown', menuKey, true); document.addEventListener('mousedown', menuAway, true);
+}
+// Shared by the row and the panel footer: the SAME handlers, confirm dialogs and endpoints. p = {data: payment row}.
+function actionHandlers(p, btns) {
+  const rail = provInfo(p.data.provider).name;
+  return {
+    report: async () => { if (await ask('Report ' + p.data.payee + ' as fraud?\n\nThis records the signal and blocks the payee in future. It does NOT recall money already sent (a sent payout cannot be reversed from here).', p.data.provider, 'Report')) return decide(p.data.payment_id, 'confirm_fraud', btns, 'report ' + p.data.payee + ' as fraud', p.data.provider); },
+    release: async () => { const ev = evidenceOf(p.data); if (await ask('Release $' + p.data.amount + ' via ' + provInfo(p.data.provider).name.toUpperCase() + ' to ' + p.data.payee + '?\n' + (ev ? '\n\nEvidence:\n- ' + (ev.detail || (ev.items || []).map((i) => i.detail)).join('\n- ') : ''), p.data.provider, 'Release')) return decide(p.data.payment_id, 'release', btns, 'release ' + p.data.payee, p.data.provider); },
+    deny: async () => { if (await ask('Reject this payment to ' + p.data.payee + '?\n\nThis permanently rejects it and can\'t be undone.', p.data.provider, 'Reject')) return decide(p.data.payment_id, 'deny', btns, 'deny ' + p.data.payee, p.data.provider); },
+    fraud: async () => { if (await ask('Record ' + p.data.payee + ' as confirmed fraud and deny this payment?', p.data.provider, 'Confirm fraud')) return decide(p.data.payment_id, 'confirm_fraud', btns, 'confirm fraud on ' + p.data.payee, p.data.provider); },
+    rail,
+  };
+}
+function releaseButton(p, rail) {
+  const go = el('button', 'act go go-' + provKey(p.data.provider), 'Release on ' + rail);
+  go.setAttribute('aria-label', 'Release ' + p.data.payee + ' on ' + rail); return go;
+}
+// One visible action per row. A frozen payment shows its primary action (rail-worded, in the platform's shape); Reject / Confirm fraud (and Report fraud on decided rows) live in the overflow menu.
+function actionRenderer(p) {
+  const w = el('span'); w.style.display = 'inline-flex'; w.style.alignItems = 'center'; w.style.gap = '6px';
+  const rail = provInfo(p.data.provider).name;
+  const more = el('button', 'act more', '⋯'); more.setAttribute('aria-haspopup', 'menu'); more.title = 'More actions';
+  more.setAttribute('aria-label', 'More actions for ' + p.data.payee);
+  if (p.data.status !== 'frozen') {
+    // allowed / flagged / already-decided rows: the only action is to REPORT fraud (records the signal and denylists the payee). Nothing is undone.
+    const h = actionHandlers(p, [more]);
+    more.onclick = () => openMenu(more, [{ label: 'Report fraud', aria: 'Report fraud ' + p.data.payee, bad: true, run: h.report }]);
+    w.append(more); return w;
+  }
+  const go = releaseButton(p, rail), both = [go, more], h = actionHandlers(p, both);
+  go.onclick = h.release;
+  more.onclick = () => openMenu(more, [{ label: 'Reject (' + rail + ')', aria: 'Deny ' + p.data.payee, run: h.deny },
+    { label: 'Confirm fraud', aria: 'Confirm fraud ' + p.data.payee, bad: true, run: h.fraud }]);
+  w.append(go, more); return w;
+}
+const cols = [
+  { headerName: 'Rail', field: 'provider', width: 116, cellClass: 'railc', cellRenderer: railRenderer, valueGetter: (p) => p.data ? (provInfo(p.data.provider).code + ' ' + provInfo(p.data.provider).name) : '' },
+  { headerName: 'Time', field: 'ts', width: 190, sort: 'desc', valueFormatter: (p) => new Date(p.value * 1000).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' }) },
+  { headerName: 'Agent', field: 'agent_id', width: 120 },
+  { headerName: 'Payee', field: 'payee', width: 160 },
+  { headerName: 'Amount', field: 'amount', width: 104, type: 'rightAligned', cellClass: 'num', valueFormatter: (p) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: (p.data && p.data.currency) || 'USD' }).format(p.value); } catch (e) { return String(p.value); } } },
+  { headerName: 'Decision', field: 'verdict', width: 130, cellRenderer: decisionRenderer },
+  { headerName: 'Risk', field: 'risk', width: 70, type: 'rightAligned', cellRenderer: riskRenderer },
+  { headerName: 'Status', field: 'status', width: 90 },
+  { headerName: 'Why (rule)', field: 'reason', flex: 3, minWidth: 240, tooltipField: 'reason', valueFormatter: (p) => plainReason(p.value), wrapText: true, cellStyle: { lineHeight: '1.3', paddingTop: '6px', paddingBottom: '6px' } },
+  { headerName: 'Narration', field: 'narration', flex: 2, minWidth: 280, wrapText: true, cellStyle: { lineHeight: '1.3', paddingTop: '6px', paddingBottom: '6px' }, valueFormatter: (p) => p.value || '' },
+  { headerName: 'Evidence', field: 'evidence_json', flex: 2, minWidth: 150, cellRenderer: evidenceRenderer, wrapText: true },
+  { headerName: '', colId: 'act', width: 200, pinned: 'right', sortable: false, filter: false, cellRenderer: actionRenderer },
+];
+let freshIds = new Set(), knownIds = null, lastInputMouse = false;
+document.addEventListener('mousedown', () => { lastInputMouse = true; }, true); document.addEventListener('keydown', () => { lastInputMouse = false; }, true);
+const api = agGrid.createGrid($('#grid'), {
+  columnDefs: cols, rowData: [], isExternalFilterPresent: () => lens !== 'all' || attn, doesExternalFilterPass: (n) => rowPass(n.data), getRowId: (p) => p.data.payment_id, animateRows: false, rowHeight: 56,
+  defaultColDef: { sortable: true, filter: true, resizable: true }, tooltipShowDelay: 300,
+  getRowClass: (p) => 'rail-' + provKey(p.data.provider) + (freshIds.has(p.data.payment_id) ? ' row-new' : '') + (p.data.payment_id === drawerId ? ' row-open' : ''),
+  onRowDataUpdated: () => syncSelection(), onModelUpdated: () => markOpen(), onViewportChanged: () => markOpen(),
+  onCellKeyDown: (e) => { if (e.event && e.event.key === 'Enter' && e.data && e.data.payment_id !== drawerId) openDrawer(e.data); },
+  onCellFocused: (e) => { if (drawerId === null || e.rowIndex == null || lastInputMouse) return; const n = api.getDisplayedRowAtIndex(e.rowIndex); if (n && n.data && n.data.payment_id !== drawerId) openDrawer(n.data); },
+  onRowClicked: (e) => { if (!(e.event && e.event.target && e.event.target.closest && e.event.target.closest('button')) && e.data.payment_id !== drawerId) openDrawer(e.data); },
+});
+function banner(msg) { const b = $('#banner'); b.textContent = msg || ''; b.style.display = msg ? 'flex' : 'none'; }
+let lastRows = [];
+function renderStats() {
+  const rows = lastRows.filter(lensPass), n = (f) => rows.filter(f).length, s = $('#stats'); s.replaceChildren();
+  [['total', 'Payments', rows.length], ['allow', 'Allowed', n((r) => r.verdict === 'allow')], ['review', 'Flagged', n((r) => r.verdict === 'review')], ['freeze', 'Frozen', n((r) => r.status === 'frozen')], ['shadow', 'Would freeze (monitor)', n((r) => r.verdict === 'freeze' && r.enforced === 0)]]
+    .forEach(([k, label, v]) => { const d = el('div', 'stat k-' + k); const sm = el('small'); const lb = el('span', null, label); if (k === 'shadow') d.title = MONITOR_TIP; sm.append(el('i'), lb); d.append(sm, el('b', null, String(v))); s.append(d); });
+}
+function stats(rows) { lastRows = rows; renderStats(); buildLens(); buildAttn(); renderStage(); }
+async function refresh() {
+  try {
+    const r = await fetch('/api/payments', { headers: hdr() });
+    if (r.status === 401) { needToken(true); banner('Operator token needed to view and decide payments.'); return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    needToken(false);
+    const rows = (await r.json()).payments; if (knownIds) { freshIds = new Set(rows.filter((x) => !knownIds.has(x.payment_id)).map((x) => x.payment_id)); } knownIds = new Set(rows.map((x) => x.payment_id)); api.setGridOption('rowData', rows); api.setColumnsVisible(['narration'], rows.some((x) => x.narration)); stats(rows); banner('');
+  } catch (e) { banner('Cannot reach the PayCanary service (' + e.message + '). Showing the last data; retrying.'); }
+}
+buildLens(); buildAttn(); refresh(); setInterval(refresh, 3000);
+
+$('#q').addEventListener('input', () => { api.setGridOption('quickFilterText', $('#q').value); syncSelection(); });
+let drawerId = null, rulesetCache = null;
+// The open payment is the selected row. Applied on creation (getRowClass) and re-applied to the live DOM whenever the panel or the rows change.
+function markOpen() { document.querySelectorAll('#grid .ag-row[row-id]').forEach((r) => r.classList.toggle('row-open', drawerId !== null && r.getAttribute('row-id') === drawerId)); }
+function closeDrawer() { $('#drawer').hidden = true; drawerId = null; markOpen(); }
+// ONE selection path. Everything that opens a payment in the panel (grid click, Enter/arrows, a related-payment row, any future caller) goes through openDrawer -> selectPayment.
+// It marks the grid row, clears the previous mark, and scrolls the row into view (ensureIndexVisible moves the viewport only; it never takes focus from the panel).
+function selectPayment(d) {
+  drawerId = d.payment_id; markOpen();
+  const n = api.getRowNode(d.payment_id); if (n && n.displayed && n.rowIndex != null) api.ensureIndexVisible(n.rowIndex);
+  setTimeout(markOpen, 60);
+}
+const isHidden = (d) => { const n = api.getRowNode(d.payment_id); return !(n && n.displayed); };
+// Re-sync the grid mark and the panel's "hidden by filter" note. Filters are never changed silently: the panel stays, the grid selection is simply absent.
+function syncSelection() {
+  markOpen(); if (drawerId === null) return; const note = $('#hiddenNote'); if (!note) return;
+  const d = lastRows.find((x) => x.payment_id === drawerId); note.hidden = !(d && isHidden(d));
+}
+function showHidden(d) {
+  if (!lensPass(d)) lens = 'all'; if (attn && !needsAttention(d)) attn = false;                // reset only what hides it
+  api.onFilterChanged(); if (isHidden(d) && $('#q').value) { $('#q').value = ''; api.setGridOption('quickFilterText', ''); }
+  buildLens(); buildAttn(); renderStats(); renderStage(); selectPayment(d); syncSelection();
+}
+const money = (v, cur) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || 'USD' }).format(v); } catch (e) { return String(v); } };
+const noDot = (t) => String(t || '').trim().replace(/[.\s]+$/, '');
+async function getRuleset() {
+  try { const r = await fetch('/api/ruleset', { headers: hdr() }); if (!r.ok) throw new Error('HTTP ' + r.status); rulesetCache = await r.json(); } catch (e) { /* keep the last copy, or none */ }
+  return rulesetCache;
+}
+// One plain sentence. "Nothing has been sent" only where the status really means no money moved (frozen, denied).
+function verdictLine(d, audit) {
+  const why = noDot(plainReason(d.reason)), tail = why ? ' ' + why + '.' : '';
+  if (d.status === 'frozen') return ['freeze', 'PayCanary froze this payment.', tail + ' Nothing has been sent.'];
+  if (d.status === 'denied') return ['freeze', 'This payment was rejected.', tail + ' Nothing has been sent.'];
+  // A frozen decision whose status is no longer 'frozen' (e.g. 'sent') can be an operator release or a rule that auto-released. Say only what the status supports.
+  const released = Array.isArray(audit) && audit.some((a) => a && a.event === 'released');
+  if (d.verdict === 'freeze' && d.enforced !== 0 && (d.status === 'sent' || d.status === 'settled') && released) return ['freeze', 'PayCanary froze this payment. An operator released it, and it has been sent.', tail];
+  if (d.verdict === 'freeze' && d.enforced === 0) return ['shadow', 'PayCanary would have frozen this payment, but this agent is in monitor mode, so it was only logged.', tail];
+  if (d.verdict === 'freeze') return ['freeze', 'PayCanary froze this payment.', tail + ' Current status: ' + d.status + '.'];
+  if (d.verdict === 'review') return ['review', 'PayCanary flagged this payment for review.', tail + (d.status === 'sent' || d.status === 'settled' ? ' It went through.' : '')];
+  if (d.verdict === 'allow') return ['allow', 'PayCanary allowed this payment.', tail];
+  return ['review', 'Status: ' + d.status + '.', tail];
+}
+function relatedRow(x, cur) {
+  const b = pwrap(x.provider, 'button'); b.className = 'rel'; b.type = 'button';
+  b.setAttribute('aria-label', 'Open ' + provInfo(x.provider).name + ' payment of ' + money(x.amount, x.currency) + ' on ' + new Date(x.ts * 1000).toLocaleDateString());
+  const sp = el('span', 'sp');
+  b.append(el('span', 'pedge'), pchip(x.provider), el('span', null, new Date(x.ts * 1000).toLocaleDateString([], { dateStyle: 'medium' })), el('span', 'num', money(x.amount, x.currency)), sp,
+    decisionRenderer({ data: x, value: x.verdict }));
+  if (cur) { b.classList.add('cur'); b.setAttribute('aria-current', 'true'); b.onclick = null; } else b.onclick = () => openDrawer(x);
+  return b;
+}
+// ---- Ask PayCanary: a typed question goes to POST /api/payments/{id}/ask (the model sees this payment's facts and can only return text; the server
+// guards the answer). The deterministic answerFor() below is the floor: it answers the chips and every time the model is unavailable or guarded out.
+// Payee, memo, question and answer text are untrusted: they only ever reach the page through textContent.
+const SUGGESTIONS = ['Why was this held?', 'Show similar payments', 'What would let this through?', 'Is this payee on our list?'];
+function relatedOf(d) { return lastRows.filter((x) => x.payee === d.payee && x.payment_id !== d.payment_id).sort((a, b) => b.ts - a.ts); }
+async function answerFor(q, d) {
+  const status = d.status, r = noDot(plainReason(d.reason)), out = [];
+  if (q === SUGGESTIONS[0]) {
+    if (status === 'frozen') out.push('PayCanary froze it, so nothing has been sent. ' + (r ? 'Reason: ' + r + '.' : 'No reason was recorded.'));
+    else if (d.verdict === 'review') out.push('PayCanary let it through but flagged it for you to look at. ' + (r ? 'Reason: ' + r + '.' : ''));
+    else if (d.verdict === 'freeze' && d.enforced === 0) out.push('The checks would have frozen it, but this agent is in monitor mode, so it was only logged. ' + (r ? 'Reason: ' + r + '.' : ''));
+    else out.push('It was not held. ' + (r ? r + '.' : ''));
+    const ev = evidenceOf(d); const items = ev ? (ev.items && ev.items.length ? ev.items : (ev.detail || []).map((x) => ({ detail: x }))) : [];
+    if (items.length) out.push('Evidence on file: ' + items.slice(0, 3).map((i) => i.detail).join('; ') + '.');
+  } else if (q === SUGGESTIONS[1]) {
+    const rel = relatedOf(d), same = rel.filter((x) => x.amount === d.amount);
+    if (!rel.length) out.push('No other payments to ' + d.payee + ' are loaded.');
+    else {
+      out.push(rel.length + ' other payment' + (rel.length === 1 ? '' : 's') + ' to ' + d.payee + ' (' + same.length + ' for the same amount):');
+      rel.slice(0, 5).forEach((x) => out.push('• ' + new Date(x.ts * 1000).toLocaleDateString() + ', ' + money(x.amount, x.currency) + ', ' + provInfo(x.provider).name + ', ' + x.verdict + ' / ' + x.status));
+    }
+  } else if (q === SUGGESTIONS[2]) {
+    if (status !== 'frozen') out.push(status === 'denied' ? 'It was rejected; that cannot be undone from here.' : 'It already went through, so there is nothing to let through.');
+    else {
+      out.push('Only you can release it: use the Release on ' + provInfo(d.provider).name + ' button below. PayCanary will not release it by itself.');
+      const m = [[/stated intent/, 'The agent did not announce this payee in its plan. It would pass if the agent announces the payee first.'], [/hard cap/, 'The amount is over the agent\'s per-payment cap. A smaller amount would pass.'],
+        [/structuring guard/, 'It would push the running total over a window limit. It passes once earlier payments age out of that window.'], [/NEW payee|not yet trusted|not yet a trusted/, 'The payee is new. It becomes trusted after 3 payments over 7 days, or immediately if you add it to Always allowed on the Policy tab.'],
+        [/imitates|NEW destination/, 'The payee looks like, or pays differently from, one already known. Check the payee name and destination before releasing.']].find(([re]) => re.test(d.reason || ''));
+      if (m) out.push(m[1]);
+    }
+  } else if (q === SUGGESTIONS[3]) {
+    const rs = await getRuleset();
+    if (!rs) out.push('I could not load the lists just now.');
+    else {
+      const p = String(d.payee).toLowerCase(), ag = rs.agents.filter((a) => (a.approved_payees || []).some((x) => String(x).toLowerCase() === p)).map((a) => a.agent_id);
+      const bad = (rs.denylist || []).some((x) => String(x.payee).toLowerCase() === p);
+      if (bad) out.push(d.payee + ' is on Always stopped (confirmed fraud).');
+      if (ag.length) out.push(d.payee + ' is on Always allowed for: ' + ag.join(', ') + '.');
+      if (!bad && !ag.length) out.push(d.payee + ' is on neither list. It is checked like any other payee.');
+    }
+  }
+  return out.join('\n');
+}
+// Which chip a typed question is closest to, for the canned floor. Anything else gets the 'why held' answer plus a pointer to what the chips cover.
+function chipFor(q) {
+  const t = q.toLowerCase();
+  if (/similar|other payments|history|before|previous|same payee/.test(t)) return 1;
+  if (/let .*through|pass|unblock|fix|what would|how (can|do)/.test(t)) return 2;
+  if (/list|allow|approved|trusted|known payee|denylist|stopped/.test(t)) return 3;
+  return 0;
+}
+async function cannedFor(q, d) { return answerFor(SUGGESTIONS[chipFor(q)], d); }
+// Which wall the live assistant hit, said plainly. The deterministic answer is always shown under it, so a wall changes who is talking, never whether you get an answer.
+const WALLS = {
+  budget: ['The assistant is at today\'s limit.', false], timeout: ['The assistant took too long.', true], junk: ['The assistant took too long.', true],
+  offline: ['The live assistant is offline right now.', false], guarded: ['The assistant could not give a clean answer.', false], empty: ['', false] };
+async function askModel(q, d) {
+  try {
+    const r = await fetch('/api/payments/' + encodeURIComponent(d.payment_id) + '/ask', { method: 'POST', headers: hdr({ 'content-type': 'application/json' }), body: JSON.stringify({ question: q }) });
+    if (!r.ok) return { reason: 'timeout' }; const j = await r.json();
+    if (j && j.source === 'model' && typeof j.answer === 'string' && j.answer) return { answer: j.answer };
+    return { reason: j && WALLS[j.reason] ? j.reason : 'timeout' };
+  } catch (e) { return { reason: 'timeout' }; }
+}
+function askBox(d) {
+  const box = el('div', 'chat'), log = el('div'), sug = el('div', 'sug'), form = el('form', 'askrow'), inp = el('input'), go = el('button', null, 'Ask');
+  log.setAttribute('aria-live', 'polite');
+  const askLive = async (q, m) => {                                   // m = the answer bubble; asked again on Retry
+    m.replaceChildren(document.createTextNode('…'));
+    const r = await askModel(q, d);
+    if (r.answer) { m.textContent = r.answer; return; }
+    const [note, retry] = WALLS[r.reason], can = (await cannedFor(q, d)) || 'Nothing to say about that.';
+    const head = el('div', 'wall'); head.append(el('b', null, note + ' '), document.createTextNode(retry ? 'Retry, or use the answer below.' : 'Here is the deterministic answer instead.'));
+    if (retry) { const rb = el('button', 'linkbtn', 'Retry'); rb.type = 'button'; rb.onclick = () => askLive(q, m); head.append(document.createTextNode(' '), rb); }
+    m.replaceChildren(head, el('div', 'det', can)); };
+  const run = async (q, chip) => {
+    log.append(el('div', 'msg me', q)); const m = el('div', 'msg', '…'); log.append(m);
+    if (chip) m.textContent = (await cannedFor(q, d)) || 'Nothing to say about that.'; else await askLive(q, m); };
+  SUGGESTIONS.forEach((q) => { const b = el('button', null, q); b.type = 'button'; b.onclick = () => run(q, true); sug.append(b); });
+  inp.type = 'text'; inp.maxLength = 300; inp.placeholder = 'Ask about this payment'; inp.setAttribute('aria-label', 'Ask PayCanary about this payment'); inp.autocomplete = 'off';
+  go.type = 'submit'; go.className = 'askgo'; form.append(inp, go);
+  form.onsubmit = (e) => { e.preventDefault(); const q = inp.value.trim(); if (!q || go.disabled) return; inp.value = ''; go.disabled = true; run(q, false).finally(() => { go.disabled = false; }); };
+  box.append(sug, log, form, el('div', 'adv', 'Advisory only. It can\'t release, reject or change anything.')); return box;
+}
+async function openDrawer(d) {
+  selectPayment(d); const box = $('#drawer'); box.hidden = false; box.replaceChildren();
+  const top = el('div', 'dtop'), body = el('div', 'dbody'), foot = el('div', 'dfoot');
+  const close = el('button', 'act', 'Close'); close.onclick = closeDrawer; close.style.float = 'right'; close.style.margin = '12px 0 0 0';
+  top.append(close, pband(d.provider, d.agent_id + ' · ' + new Date(d.ts * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })), el('h3', null, d.payee + '  ' + money(d.amount, d.currency)));
+  const vl = el('div', 'verdict');
+  const paintVerdict = (audit) => { const [kind, head, tail] = verdictLine(d, audit), dec = el('span', 'dec ' + kind); dec.append(el('i')); vl.replaceChildren(dec, el('b', null, head), document.createTextNode(tail));
+    if (d.reason && plainReason(d.reason) !== d.reason) { const td = el('details'); td.append(el('summary', null, 'Technical detail'), el('div', 'muted', d.reason)); td.style.marginTop = '6px'; vl.append(td); } };
+  paintVerdict(null); top.append(vl);
+  const hn = el('div', 'muted'); hn.id = 'hiddenNote'; hn.hidden = true; hn.style.margin = '8px 0 0'; const sh = el('button', 'linkbtn', 'Show it'); sh.type = 'button'; sh.onclick = () => showHidden(d);
+  hn.append(document.createTextNode('This payment is hidden by the current filter. '), sh); top.append(hn); box.append(top, body, foot); syncSelection();
+  // Checked against: only when the cap is configured on the agent itself (no pinned profile that could change it). Multipliers are gate.WINDOW_MULT.
+  const cap = el('div', 'checked'); body.append(cap);
+  getRuleset().then((rs) => { const a = rs && (rs.agents || []).find((x) => x.agent_id === d.agent_id);
+    if (drawerId === d.payment_id && a && typeof a.hard_cap === 'number' && !a.profile) cap.textContent = 'Checked against: per-payment cap ' + money(a.hard_cap) + '; window caps ' + money(a.hard_cap * 2) + ' per hour, ' + money(a.hard_cap * 4) + ' per day, ' + money(a.hard_cap * 10) + ' per week.'; });
+  // Every payment to this payee, newest first; the open one is marked current (same neutral highlight as the grid row, aria-current).
+  const rows = lastRows.filter((x) => x.payee === d.payee).sort((a, b) => b.ts - a.ts); body.append(el('h4', null, 'Payments to this payee (' + rows.length + ')'));
+  let shown = rows.slice(0, 8); if (!shown.some((x) => x.payment_id === d.payment_id)) shown = shown.slice(0, 7).concat([d]);
+  shown.forEach((x) => body.append(relatedRow(x, x.payment_id === d.payment_id)));
+  if (rows.length > shown.length) body.append(el('div', 'muted', '+ ' + (rows.length - shown.length) + ' older not shown'));
+  body.append(el('h4', null, 'Ask PayCanary'), askBox(d));
+  if (d.narration) body.append(el('h4', null, 'Narration (advisory)'), el('div', null, d.narration));
+  const ev = evidenceOf(d), items = ev ? (ev.items && ev.items.length ? ev.items : (ev.detail || []).map((x) => ({ detail: x }))) : [];
+  if (items.length) { body.append(el('h4', null, 'Evidence')); items.forEach((it) => body.append(el('div', null, (it.severity === 'hard' ? '⚠ ' : '• ') + it.detail)));
+    body.append(el('small', 'muted', 'Domain ' + (ev.domain || '?') + '; checked: ' + ((ev.checked || []).join(', ') || 'offline checks only'))); }
+  const det = el('details'), sum = el('summary', null, 'Details: ' + d.agent_id + ' · risk ' + Math.round(d.risk || 0) + ' · ' + (d.enforced === 0 ? 'monitor mode (logs only)' : 'active mode (holds payments)') + ' · policy ' + (d.policy_hash || '').slice(0, 8)), kv = el('div', 'kv');
+  [['Decision', d.verdict + (d.enforced === 0 ? ' (monitor mode: would freeze)' : '')], ['Status', d.status], ['Agent', d.agent_id], ['Risk', String(Math.round(d.risk || 0))], ['Mode', d.mode === 'shadow' ? 'monitor' : d.mode === 'enforce' ? 'active' : (d.mode || '')], ['Decided by', d.decided_by || ''],
+   ['Memo', d.memo || ''], ['Rail', provInfo(d.provider).name + ' (fixed when the payment is created)' + (d.provider_ref ? '  (' + d.provider_ref + ')' : '')], ['Policy hash', (d.policy_hash || '').slice(0, 16)], ['Payment id', d.payment_id]]
+    .forEach(([k, v]) => kv.append(el('span', null, k), el('span', null, v)));
+  det.append(sum, kv); body.append(det);
+  const audit = el('details'), asum = el('summary', null, 'Audit trail'), trail = el('pre', null, 'loading...'); audit.append(asum, trail); body.append(audit);
+  // Sticky footer: same handlers as the row. Rail-worded primary, then text-only destructive actions, then the audit trail.
+  const p = { data: d }, btns = [];
+  const audBtn = el('button', 'act', 'Audit trail'); audBtn.onclick = () => { audit.open = true; audit.scrollIntoView({ block: 'nearest' }); };
+  const after = (pr) => Promise.resolve(pr).then(() => { const f = lastRows.find((x) => x.payment_id === d.payment_id); if (f && drawerId === d.payment_id) openDrawer(f); });
+  if (d.status === 'frozen') {
+    const go = releaseButton(p, provInfo(d.provider).name), rej = el('button', 'act no', 'Reject'), fr = el('button', 'act no', 'Mark as fraud'); btns.push(go, rej, fr);
+    const h = actionHandlers(p, btns);
+    go.onclick = () => after(h.release()); rej.onclick = () => after(h.deny()); fr.onclick = () => after(h.fraud()); foot.append(go, rej, fr, audBtn);
+  } else {
+    const fr = el('button', 'act no', 'Report fraud'); btns.push(fr); const h = actionHandlers(p, btns); fr.onclick = () => after(h.report()); foot.append(fr, audBtn);
+  }
+  try {
+    const r = await fetch('/api/audit?payment_id=' + encodeURIComponent(d.payment_id), { headers: hdr() }); const j = await r.json();
+    if (drawerId === d.payment_id) paintVerdict(j.rows || []);
+    if (drawerId === d.payment_id) trail.textContent = (j.rows || []).map((a) => new Date(a.ts * 1000).toLocaleTimeString() + '  ' + a.event + '  by ' + a.actor).join('\n') || 'No audit rows.';
+  } catch (e) { trail.textContent = 'Could not load the audit trail.'; }
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawerId !== null && !openMenuEl && $('#ask').style.display !== 'flex') closeDrawer(); });
+
+// ---- Policy: how PayCanary decides. Order matches the engine: always allowed, always stopped, then the checks. ----
+let view = 'pay';
+function show(v) { view = v; $('#q').style.display = v === 'pay' ? '' : 'none'; $('#attn').style.display = v === 'pay' ? '' : 'none'; $('#lens').style.display = v === 'pay' ? '' : 'none'; closeDrawer(); $('#grid').style.display = v === 'pay' ? '' : 'none'; $('#fw').style.display = v === 'fw' ? 'block' : 'none';
+  $('#tabPay').setAttribute('aria-pressed', v === 'pay'); $('#tabFw').setAttribute('aria-pressed', v === 'fw'); if (v === 'fw') loadFw(); renderStage(); }
+$('#tabPay').onclick = () => show('pay'); $('#tabFw').onclick = () => show('fw'); renderStage();
+async function post(path, body, label) { await act(path, body, label || 'save the change'); loadFw(); }
+function sec(title, sub, c) { const s = el('section'), h = el('h2'); const dot = el('i'); dot.style.setProperty('--c', c || 'transparent'); if (c) h.append(dot); h.append(document.createTextNode(title)); s.append(h, el('p', 'sub', sub)); return s; }
+// Each sentence below is checked against app/gate.py (_classify_base). Numbers are the gate defaults; a pinned profile can change the per-agent knobs.
+// Outcomes: FREEZE holds the payment until an operator decides; REVIEW lets it proceed but flags it for a human.
+const RULES = [
+  ['Spending limit per agent', 'A single payment is over the agent\'s spending limit.', 'Freeze', 'A single payment is over the agent\'s per-payment cap.'],
+  ['Too much, too fast', 'An agent or payee is receiving far more than usual.', 'Freeze', 'An agent adds up to more than 2x its cap in an hour, 4x in a day or 10x in a week; or one payee more than 2x in a day or 5x in a week. Also: more than 5 payment attempts in a minute, or more than 2.5x the agent\'s largest payment leaving within a minute.'],
+  ['New payee', 'A payee not paid before is getting a large or repeated payment.', 'Freeze', 'A payee never paid before is over 2x the agent\'s typical payment, or (if you have not approved it and the agent has fewer than 5 payments of history) over $100. A payee that is not yet trusted (3 payments over 7 days, or approved by you) receiving repeat payments in a minute, or a day\'s or week\'s total past its budget.'],
+  ['New payee, large or first-ever', 'First payment to a payee, or a large one to an unproven payee.', 'Flag for review', 'A first payment to an unproven payee above the smaller of $500 or 3x the agent\'s typical; or the first-ever payment to a payee within norms.'],
+  ['Matches what the agent said it would pay', 'The payee isn\'t in what the agent said it would pay.', 'Freeze', 'The payee is not in the plan the agent announced, or the agent must announce a plan and has not.'],
+  ['Unusual spread', 'Many payments to new payees are adding up quickly.', 'Freeze or flag', 'In 24 hours, payments to not-yet-trusted payees add up to more than 3x the agent\'s typical payment. Freezes unless every new payee checks out clean, in which case it is flagged instead.'],
+  ['Looks like a trick', 'Impersonation, a changed destination, or a repeated identical payment.', 'Freeze', 'The payee imitates a known payee, a known payee is being paid at a new destination, or an identical payment went out in the last 5 minutes.'],
+  ['Unusual for this agent', 'The amount, timing or memo is out of character for this agent.', 'Flag for review', 'The amount is far above what this agent or payee normally sees (frozen if extreme), the memo uses pressure wording, a regular bill arrives off its usual cycle, or it is paid outside the agent\'s usual hours.'],
+];
+async function loadFw() {
+  const box = $('#fw');
+  try {
+    const r = await fetch('/api/ruleset', { headers: hdr() });
+    if (r.status === 401) { needToken(true); banner('Operator token needed.'); return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json(); rulesetCache = d; try { const pr = await fetch('/api/profiles', { headers: hdr() }); const pj = await pr.json(); const last = {}; pj.profiles.forEach((x) => { last[x.name] = x; }); d.profiles = Object.values(last); } catch (e) {} box.replaceChildren();
+    const head = el('div'); head.append(el('h1', null, 'How PayCanary decides'), el('p', 'intro', 'PayCanary guards payments your agents ask to make. It doesn\'t run your agents or your PayPal and Stripe accounts.')); box.append(head);
+    // 1. Always allowed
+    const pass = sec('Always allowed · trusted payees', 'Payments to these payees skip the checks. Every change is written to the audit log.', 'var(--allow)');
+    const scope = el('select'); scope.setAttribute('aria-label', 'Applies to'); const all = el('option', null, 'All agents'); all.value = ''; scope.append(all);
+    d.agents.forEach((a) => { const o = el('option', null, a.agent_id); o.value = a.agent_id; scope.append(o); });
+    const sl = el('label', 'muted', 'Applies to: '); sl.append(scope); sl.style.display = 'block'; sl.style.margin = '0 0 10px'; pass.append(sl);
+    const tags = el('div'); pass.append(tags);
+    const drawTags = () => {
+      tags.replaceChildren(); const byPayee = new Map();
+      d.agents.filter((a) => !scope.value || a.agent_id === scope.value).forEach((a) => (a.approved_payees || []).forEach((p) => { if (!byPayee.has(p)) byPayee.set(p, []); byPayee.get(p).push(a.agent_id); }));
+      byPayee.forEach((agents, p) => { const t = el('span', 'tag', p); t.title = 'Allowed for ' + agents.join(', ');
+        const x = el('button', null, '×'); x.title = 'Remove ' + p; x.setAttribute('aria-label', 'Remove ' + p + ' from ' + agents.join(', '));
+        x.onclick = async () => { if (agents.length > 1 && !(await ask('Remove ' + p + ' from Always allowed for ' + agents.length + ' agents (' + agents.join(', ') + ')?'))) return;
+          for (const ag of agents) await act('/api/agents/' + encodeURIComponent(ag) + '/approved_payees', { remove: [p] }, 'remove ' + p + ' for ' + ag); loadFw(); };
+        t.append(x); tags.append(t); });
+      if (!byPayee.size) tags.append(el('span', 'muted', 'No trusted payees yet. '));
+    };
+    scope.onchange = drawTags; drawTags();
+    const addRow = el('div'); addRow.style.marginTop = '10px';
+    const who = el('select'); who.setAttribute('aria-label', 'Add to which agent'); const ph = el('option', null, 'Choose an agent'); ph.value = '__none'; who.append(ph);
+    d.agents.forEach((a) => { const o = el('option', null, a.agent_id); o.value = a.agent_id; who.append(o); });
+    const inp = el('input'); inp.placeholder = '+ Add a payee'; inp.setAttribute('aria-label', 'Add a payee');
+    const add = el('button', 'act go', 'Add'); add.onclick = () => { const v = inp.value.trim(); if (!v) return; if (who.value === '__none') { toast('Choose which agent this payee is trusted for.', 'err'); return; } post('/api/agents/' + encodeURIComponent(who.value) + '/approved_payees', { add: [v] }, 'approve ' + v + ' for ' + who.value); };
+    if (d.agents.length) addRow.append(inp, who, add); else addRow.append(el('span', 'muted', 'No agents configured yet.'));
+    pass.append(addRow);
+    // 2. Always stopped
+    const deny = sec('Always stopped · confirmed fraud', 'Payees YOU marked as confirmed fraud. ' + (d.reputation_active ? 'Cross-agent reputation is on, so the shared signal stops them for every agent.' : 'Reputation sharing is off in this deployment, so this is a record only (set PAYCANARY_REPUTATION=1 to enforce it).') + ' Only your own entries are shown.', 'var(--freeze)');
+    d.denylist.forEach((x) => deny.append(el('span', 'tag bad', x.payee)));
+    if (!d.denylist.length) deny.append(el('span', 'muted', 'None yet. Use "Mark as fraud" on a held payment to add one.'));
+    // 3. Everything else: read-only rule cards (the gate has no per-rule switches, so none are shown)
+    const rest = sec('Everything else · PayCanary checks', 'Each payment is checked against these rules. A freeze holds the payment until you decide; a flag lets it through and shows it as needing a look. The AI can explain a decision but cannot make one. Limits shown are the defaults; an agent\'s profile can change them.', 'var(--review)');
+    RULES.forEach(([name, when, outcome, detail]) => { const row = el('div', 'rule'), txt = el('div'), dt = el('details'); dt.append(el('summary', null, 'Details'), el('div', 'when', detail)); txt.append(el('b', null, name), el('span', 'when', when), dt); row.append(txt, el('div', 'out', outcome)); rest.append(row); });
+    // Advanced: per-agent settings (existing handlers)
+    const adv = el('details'); adv.append(el('summary', null, 'Advanced: per-agent settings'));
+    const advBody = el('section'); advBody.append(el('p', 'sub', 'Monitor records what PayCanary WOULD do without holding any payment (the platform cap still applies). Active holds payments.'));
+    d.agents.forEach((a) => {
+      const row = el('div', 'agentrow'); row.append(el('b', null, a.agent_id));
+      const sel = el('select'); sel.setAttribute('aria-label', 'Mode for ' + a.agent_id);
+      [['shadow', 'Monitor (logs only)'], ['enforce', 'Active (holds payments)']].forEach(([v, t]) => { const o = el('option', null, t); o.value = v; if (a.mode === v) o.selected = true; sel.append(o); });
+      sel.onchange = () => post('/api/agents/' + encodeURIComponent(a.agent_id) + '/mode', { mode: sel.value });
+      const ps = el('select'); ps.setAttribute('aria-label', 'Policy profile for ' + a.agent_id);
+      const none = el('option', null, 'Custom (no profile)'); none.value = ''; ps.append(none);
+      (d.profiles || []).forEach((pf) => { const o = el('option', null, pf.name + ' v' + pf.version); o.value = pf.name + '@' + pf.version; if (a.profile === o.value) o.selected = true; ps.append(o); });
+      if (a.profile && ![...ps.options].some((o) => o.value === a.profile)) { const o = el('option', null, a.profile.replace('@', ' v') + ' (pinned)'); o.value = a.profile; o.selected = true; ps.append(o); }
+      ps.onchange = () => post('/api/agents/' + encodeURIComponent(a.agent_id) + '/profile', { profile: ps.value || null });
+      row.append(sel, ps, document.createTextNode(' '));
+      if (typeof a.hard_cap === 'number') row.append(el('small', null, 'Per-payment cap ' + money(a.hard_cap)));
+      (a.warnings || []).forEach((w) => { const wl = el('div', null, '⚠ ' + w); wl.style.color = 'var(--review)'; wl.style.fontSize = '12.5px'; row.append(wl); });
+      advBody.append(row);
+    });
+    if (!d.agents.length) advBody.append(el('small', null, 'No agents configured yet.'));
+    adv.append(advBody);
+    const hist = sec('Recent changes', 'Allowlist and mode changes (full record: /api/audit).');
+    d.history.forEach((h) => hist.append(el('div', null, new Date(h.ts * 1000).toLocaleString() + '  ' + h.agent_id + ' by ' + h.by + ':  ' + [h.allowlist_added.length ? 'approved ' + h.allowlist_added.join(', ') : '', h.allowlist_removed.length ? 'removed ' + h.allowlist_removed.join(', ') : '', h.mode_from !== h.mode_to ? 'mode ' + (h.mode_from || 'default') + ' to ' + (h.mode_to || 'default') : ''].filter(Boolean).join('; '))));
+    if (!d.history.length) hist.append(el('small', null, 'No changes yet.'));
+    box.append(pass, deny, rest, adv, hist);
+  } catch (e) { banner('Cannot load the policy (' + e.message + ').'); }
+}
+</script>
+</body>
+</html>

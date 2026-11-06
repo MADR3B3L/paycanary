@@ -1,0 +1,23 @@
+{"kind": "agent_config", "agent": "bill-payer-bot", "hard_cap": 2000.0, "active_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}
+{"kind": "history", "payee": "AWS", "amount": 89.0, "ts": 1000.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 4600.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 60.0, "ts": 8200.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 95.0, "ts": 11800.0, "hour": 10}
+{"kind": "history", "payee": "Twilio", "amount": 48.0, "ts": 15400.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 110.0, "ts": 19000.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 60.0, "ts": 22600.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 26200.0, "hour": 10}
+{"kind": "history", "payee": "Twilio", "amount": 52.0, "ts": 29800.0, "hour": 10}
+{"kind": "history", "payee": "AWS", "amount": 88.0, "ts": 33400.0, "hour": 10}
+{"kind": "history", "payee": "Vercel", "amount": 72.0, "ts": 37000.0, "hour": 10}
+{"kind": "history", "payee": "GitHub", "amount": 21.0, "ts": 40600.0, "hour": 10}
+{"payee": "QuickCashLLC", "amount": 1900.0, "ts": 200600.0, "hour": 11, "stated_intent_payees": ["QuickCashLLC"], "kind": "txn"}
+{"payee": "AttackerWallet", "amount": 120.0, "ts": 200700.0, "hour": 11, "stated_intent_payees": ["AWS"], "kind": "txn"}
+{"payee": "AWS", "amount": 1500.0, "ts": 200800.0, "hour": 12, "stated_intent_payees": ["AWS"], "kind": "txn"}
+{"payee": "AWS", "amount": 5000.0, "ts": 200900.0, "hour": 12, "stated_intent_payees": ["AWS"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201000.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201005.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201010.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201015.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201020.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}
+{"payee": "GitHub", "amount": 21.0, "ts": 201025.0, "hour": 12, "stated_intent_payees": ["GitHub"], "kind": "txn"}

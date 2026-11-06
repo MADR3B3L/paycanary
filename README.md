@@ -1,0 +1,196 @@
+# PayCanary
+
+> **PayCanary sits between payments. Normal ones pass through; anything questionable is held while deterministic checks gather the evidence, and an LLM explains it in plain language — but the AI can never move money itself.**
+
+**A stateful, policy-driven payment firewall for AI agents.** It sits in the payment path (in-path, fail-closed, default-deny on any error), judges each payment against that agent's whole behavioural history rather than one transaction at a time (stateful inspection), and keeps a tamper-evident audit trail. The paying agent never holds the PayPal credentials.
+
+Built for the PayPal AI Hackathon (Oct 1 – Nov 12, 2026). **PayPal sandbox only.**
+
+## What it is, and why
+AI agents are about to spend real money on people's behalf, and almost nothing checks those payments. The usual guard is a spending limit, but a limit only stops what you already thought to forbid. It does nothing about the payment that is inside every rule and still wrong: a payee the agent was never told to pay, a brand-new account with no history, a slow drain trained to look normal.
+
+PayCanary sits in the payment path, in front of PayPal Payouts:
+
+- **Normal payments go straight through**, decided by fast, fixed rules: no AI, no cost, no delay.
+- **Anything that looks off is held.** Deterministic checks gather the evidence (domain age, scam-feed matches, whether it matches what the agent said it would do) and decide. An LLM (Claude Haiku) then explains in plain language why it is worth a look, and it is surfaced for a decision.
+- **A held payment is cleared only by a person or a strict rule that re-checks the evidence, never by the AI.** Every decision is written to a hash-chained, tamper-evident audit log.
+
+**What the AI does and does not do.** Deterministic rules gather the evidence and decide. The AI (Claude Haiku) writes the plain-language explanation, and it can only add friction: it can flag an allowed payment for a human to look at, never the other way round. It cannot freeze, release, send or un-freeze a payment, and nothing in the shipped code gives it a path to. Only a person, or a strict rule that re-checks the evidence, clears a held payment. There is no code path for the AI to release a payment, so a prompt injection cannot make it release one. The paying agent never holds the PayPal credentials, so if PayCanary is down no money moves (provided the agent cannot read them; see "Security model").
+
+## Who clears a held payment
+PayCanary hands a held payment and its evidence to an **operator**: whoever owns the account. For a person, themselves; for a business, their fraud team, advisors, platform or their own AI. Today that is one operator credential (a person or a system can hold it) with API, dashboard and signed-webhook access to the held payment and its evidence. Named operators with individual identities and roles are roadmap, not shipped.
+
+## How it works
+- **Behavioural gate (deterministic).** Per-agent baseline, hard caps, rolling cumulative windows, replay/drain/structuring/lookalike guards, a changed-destination guard, a fan-out guard, and a ratchet that stops an attacker training the baseline. Frozen payments never teach the baseline. The LLM is never in this path.
+- **Goalie.** A `FREEZE` holds the payment before the PayPal Payouts call is ever made; only the operator (or a strict re-check rule, opt-in) releases it.
+- **Intent-read.** The agent announces what it is about to pay (`POST /intent`). The deterministic gate checks the payee against that stated plan *before* the call and freezes an off-plan payee; separately, for an allowed/review payment a short LLM read of the plan-vs-payment runs *after* the call as advisory narration (it can flag, never release).
+- **Evidence.** Offline checks plus opt-in public signals (domain age, mail records, phishing feeds); only the recipient domain ever leaves. Optional cross-customer payee reputation shares fraud signals without sharing anyone's transaction data.
+- **Dashboard.** AG Grid review queue: risk, evidence, narration, release / deny / confirm fraud.
+- **Firewall ruleset.** A second dashboard view with three bands: *always pass* (each agent's approved payees, editable and audited), *always freeze* (payees you confirmed as fraud; the shared signal enforces it when cross-agent reputation is on, and you only ever see your own entries), and *everything else scored* by the behavioural gate.
+- **Shadow or Enforce, per agent.** Shadow (log only) records what the gate WOULD do without holding any payment (the operator's platform cap still applies); Enforce holds. Roll out shadow-first, watch it be right, then switch to Enforce. The switch is audited.
+
+## PayPal capabilities used (sandbox)
+Payouts (`/v1/payments/payouts`, the path PayCanary guards), Webhooks (`/v1/notifications/verify-webhook-signature`, payment-status events), Reporting (`/v1/reporting/transactions`, optional: seed a customer's "normal" from real history), Orders (`/v2/checkout/orders`, fallback), and OAuth2 for the access token. Stripe (test mode) is the second provider.
+
+## Results (honest numbers; commands under "Reproduce the numbers")
+
+> **These are results on our own synthetic and real-world-*shaped* corpora — test sets we wrote ourselves and that you can reproduce with the commands below. They are not a real-world guarantee. The precision and recall shown hold on these corpora; how the gate behaves on live money needs real traffic, real history, and real attack patterns we don't have yet. We publish the misses on purpose: the honest picture matters more than a clean headline.**
+
+| Corpus | Recall | Precision | False nags (benign payments held) |
+|---|---|---|---|
+| Synthetic multi-transaction benchmark (227 txns, the shipped gate) | 115/156 = 73.7% | 100% | 0/71 |
+| Real-world-shaped corpus through the real `/pay` path (with `PAYCANARY_ENRICHMENT=1`; without it a tripped fan-out guard is a blind hold and recall is lower) | 135/174 = 77.6% | 100% | 0/112 |
+
+Persona matrix: eight benign customer types (a student's $6 payment, a cross-border remittance, a business's six-figure invoice, and more) produced 0 false nags in 70 benign payments (`tools/score_persona_service.py`). These figures are for the shipped default (no profile: cooling-off off, `probation_hold` off). With cooling-off on for every agent and `probation_hold` off, the real-world corpus gives 79.3% recall / 100% precision / 0 of 112 benign held; turning `probation_hold` on lifts real-world recall to 92.5% but holds 21 of 112 benign first payments to new vendors (precision 88.5%), and 2 of 71 on the synthetic benchmark (reproduce: `python3 tools/score_cooldown_on.py [--hold]`). Not caught, and said so below: a patient attacker who stays small, replays and bursts are capped by construction (a replay's first copy executes by definition; the duplicate is frozen), and slow escalation at the legitimate-growth rate looks like growth (bounded by the per-agent cap and caught on any deviation).
+
+## Run it
+
+**Judges / reviewers start here: one command, no keys, no PayPal account needed.**
+```bash
+./run.sh
+```
+That creates a virtual environment, installs the two runtime packages, prints the URL and your operator token, and serves the full product at http://127.0.0.1:8000/. Paste the printed token into the "Operator token" box. (If you prefer the bare command: `PAYCANARY_DEMO=1 PAYCANARY_DEMO_OFFLINE=1 uvicorn app.main:app` after `pip install -r requirements.txt`. The token is in `.paycanary_tokens.json` in the project folder, which the app creates on first start.)
+
+This is the full product with the real gate making the real decisions; only the payouts are simulated (ids labelled SIM-PP-... / SIM-ST-...), so no money moves and no PayPal call is made. Zero setup, no network after install, boots in about a second. It shows four agents (cloud ops, accounts payable, contractors, team subscriptions) with about three months of established payments on their real cadence, 4 frozen payments for you to Release or Deny (an off-plan payee to a throwaway inbox, a 10x fat-fingered invoice over the cap, a payout split into chunks, ...) and a few flagged ones, all produced by the real gate on a simulated clock. There are no Haiku notes in this mode. Full install steps, the three ways to run it, and where the token comes from: [INSTALL.md](INSTALL.md).
+
+Run the tests: `./run.sh test` (or `python3 -m unittest discover -s tests -t .`).
+
+### Optional: send a real PayPal sandbox payout with YOUR OWN keys
+You do not need this to evaluate PayCanary. If you want payments to go to PayPal's sandbox, use **your own** PayPal sandbox app and sandbox accounts (the author's credentials are never part of this repo or this demo):
+```bash
+python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+cp .env.example .env        # then add YOUR sandbox Client ID/Secret (never commit .env)
+python3 tools/probe_payouts.py      # checks that your sandbox token + Payouts work
+PAYCANARY_DEMO=1 uvicorn app.main:app   # populated review queue; payments you send afterwards go to your sandbox
+```
+Add an Anthropic key (also yours) for Haiku narration on flagged payments; drop `PAYCANARY_DEMO_OFFLINE` to have it narrate the seeded rows too (slower to seed).
+
+`PAYCANARY_DEMO=1` seeds an empty DB with payments that pass, are flagged, and are frozen. The seeded history always uses simulated payouts (ids labelled SIM-PP-... / SIM-ST-...), so it never spends sandbox funds or shows a PayPal error; `python3 -m app.seed --live` opts in to real sandbox payouts for it. `POST /demo/seed` exists only when `PAYCANARY_DEMO=1`. Runs locally; there is no hosted deployment.
+
+**Safe by default.** An agent nobody configured must have a live stated plan (`POST /intent`) or its payment is frozen, and it has a $500 per-payment cap. Loosen per agent with `POST /api/agents` (`require_intent`, `hard_cap`).
+
+## Tools used
+PayPal Developer Platform (sandbox), Anthropic Claude (Haiku) for the review/explain step, AG Grid (dashboard), FastAPI + SQLite. Built and tested with Claude Code.
+
+## What's new in this hackathon
+Everything here was built during the submission period: the payment-event schema, the goalie, the intent-read, the evidence and reputation layers, the audit log, auth model and dashboard. The novelty/degradation gate idea is adapted from an earlier host-observer prototype of ours.
+
+---
+# Technical detail
+
+## Reproduce the numbers
+Run the tests with the stdlib runner (pytest is not required): `python3 -m unittest discover -s tests -t .` (use `.venv/bin/python` to include the HTTP/auth tests, which need fastapi + httpx).
+- Detection benchmark (227-txn corpus, shipped gate): `python3 tools/score_benchmark.py`, and the same corpus through the real `/pay` code path: `python3 tools/score_benchmark_service.py` (must report 371/371 tier-identical).
+- Real-world-shaped corpus through `Service.pay`: `python3 tools/score_realworld_service.py`.
+- Cross-agent reputation: `python3 tools/score_crossagent_e2e.py` and `python3 tools/score_crossagent.py`; the caveats are stated in the module docstrings.
+- Cold start and ingest: `python3 tools/score_coldstart.py`.
+- LLM layer (real Haiku, costs tokens): `python3 tools/score_llm.py`.
+The per-class lines are the honest view: replay is capped at 50% (the first copy can never be frozen) and bursts at about (n-5)/n by construction.
+
+## Integrate in five minutes
+PayCanary is the only thing that holds your PayPal credentials; your agent calls it instead of PayPal. The call is Payouts-shaped plus a payee name:
+```bash
+curl -X POST $PAYCANARY/pay -H "Authorization: Bearer $AGENT_TOKEN" -H "PayPal-Request-Id: order-1001" -H "content-type: application/json" \
+  -d '{"agent_id":"bill-bot","payee":"AWS","recipient_email":"aws@example.com","amount":"42.00","currency":"USD","memo":"October"}'
+```
+1. Put your PayPal sandbox Client ID/Secret in the proxy's `.env` (never in the agent's environment) and start it (`uvicorn app.main:app`).
+2. As the operator: `POST /api/agents` to set the agent's `hard_cap`, `approved_payees`, `mode`; `POST /api/agents/{id}/token` for the agent's own credential.
+3. The agent has the agent token only. Before a task it announces its plan with `POST /intent`; then it calls `/pay`.
+4. Responses: `decision` allow / review (proceeds, flagged) / freeze (held for a human); `status` sent / frozen / paypal_error; HTTP 503 `fail_closed` means no verdict was reached and nothing was sent.
+Honest scope: this is PayCanary's own `/pay` API, not a drop-in PayPal base URL. A Payouts-compatible route (`POST /v1/payments/payouts`) is on the roadmap.
+
+**Idempotency.** Send `PayPal-Request-Id` (1-64 chars of letters, digits, `_ . : -`; opaque, no personal data). The same key replays the FIRST result byte for byte (verdict, status, even a `paypal_error`) with `Idempotent-Replay: true` and never pays twice, including under a race; the same key with different parameters is `422 idempotency_conflict`; a retry that lands while the first is in flight is `409 in_progress`. Keys are scoped per agent.
+
+## Cross-agent payee reputation (opt-in: `PAYCANARY_REPUTATION=1`)
+A de-identified table shared by every agent: per payee, a keyed hash of its destination, keyed hashes of the customer orgs that paid or flagged it, a timestamp and an event TYPE, and nothing else (no amounts, memos, payment ids, agent ids, plaintext emails, org ids or names; the schema itself is tested). The HMAC key is a proxy-side secret like the PayPal credentials (`PAYCANARY_REPUTATION_KEY`, or generated into the 0600 tokens file); without it reputation stays off. Only payee-attributable evidence is shared: executed payments, operator-confirmed fraud (`POST /api/payments/{id}/confirm_fraud`, operator only), operator denial of a payee-identity freeze, and identity freezes (lookalike, changed destination, payee outside the plan); cap, velocity and amount freezes describe an agent and are never shared. `org_id` is operator-set per agent (an agent cannot mint orgs). Reads are "as of" a moment, so they never see the future, and a customer's contributions can be removed (`forget_org`). Across separate deployments the key must be shared, so a true multi-customer network would hash centrally; that limit is stated, not hidden.
+
+## Fresh-attacker defences (new payees)
+- **Probation cap:** a single payment to an unproven payee (not trusted, not operator-approved) above min($500, 3x the agent's typical) is a review; both are per-agent knobs (`probation_abs`, `probation_mult`).
+- **New-payee burst:** the second payment attempt to a not-yet-trusted payee inside 60 seconds freezes (a new payee has no business being paid twice in a minute).
+- **Structuring fan-out guard (contextual).** The cheap trigger: money moved in 24 hours to payees that are brand new to the agent (first paid inside the window) and neither trusted nor operator-approved exceeds 3x the agent's typical (`fanout_k`, per-agent knob), whether or not a hard cap is set. The decision is no longer the count: it is the evidence on that SET of new payees (`fanout_verdict`). Any mule-shaped payee (feed hit, or several soft signals such as a days-old domain with no mail) freezes the set; evidence that is missing or could not run holds it ("unknown is not clean"); only when every new payee has been checked and looks like a real business does the payment proceed, flagged "fan-out onboarding" for the operator. So 30 cheap-footprint mules freeze after about three payments, while onboarding five real vendors in a day passes. Evidence comes from the same enrichment as below (`PAYCANARY_ENRICHMENT=1`); without it a tripped counter is held as a blind count, as before, and the current payee is gathered inline (bounded timeouts) only on this rare path.
+- **External evidence.** Tier 0 (always on, no network): a disposable-email domain, or a business-looking name paid to a freemail inbox. Tier 1 (opt-in, `PAYCANARY_ENRICHMENT=1`): domain registration age (RDAP via the IANA bootstrap), MX presence (Cloudflare DoH) and two public phishing-domain feeds (Phishing Army CC BY-NC, Phishing.Database MIT) downloaded and matched locally. Only the recipient DOMAIN ever leaves; never the address, amount, memo, agent or org. Results are cached per domain (24h; failures 5 min) with a per-minute budget, every call times out and fails open (a check that did not run is shown as "not checked", never as clean), and redirects are refused.
+- **Freeze-and-gather-then-ask.** Soft signals (young domain, no MX, disposable inbox, business name at a freemail address) accumulate: enough of them HOLD a first payment (held for a human); a phishing-feed hit is hard. For every held or first-payee payment the evidence is gathered out of the pay path and attached to the payment, the dashboard ("Evidence" column, also shown in the Release confirmation) and the freeze alert, so the approval is informed. A clean footprint never releases anything and never relaxes a tier; evidence only adds friction. An executed payment that evidence flags later is audited (`adverse_evidence_after_execution`) and alerted.
+- **Cooling-off (opt-in per agent: `cooldown_s`, default 0 = off).** A FIRST payment to a new, unapproved payee above 1.5x the agent's typical is held for the window. A stricter posture, the per-agent / per-profile flag `probation_hold` (default OFF; no shipped preset enables it), also holds a first payment above the probation ceiling (min of the absolute and multiple caps), which with the flag off is sent flagged as a review. The held payment waits while the evidence gathers, then releases itself server-side, but only if (1) the gather completed and found nothing adverse (a gather that could not run counts as unknown, not clean, and keeps the hold), and (2) the payment re-checked NOW, with its original plan, is no longer frozen by any rule (cap, cumulative windows, reputation, evidence). Otherwise it stays held for the operator, who can deny it at any moment (an atomic claim means a sweep can never override a denial or send twice). Evidence holds (a disposable inbox) and hard freezes have no timer and never auto-release. The agent polls `GET /pay/{payment_id}?agent_id=...` (its own payments only); every outcome is in the audit log (`auto_released_after_cooldown`, `cooldown_release_blocked`).
+- **Honest limits.** A payee's FIRST payment is held only on inline offline signals plus anything already cached; network evidence informs a hold, it does not delay the first payment waiting on a lookup (that would need an asynchronous pay flow: roadmap). The offline signals alone max out at the weight of the existing first-payee review, so they matter once other evidence exists. Sanctions screening and business-registry lookups are not wired (fuzzy name matching has a high false-positive rate; there is no free registry API).
+
+## Providers: PayPal is the first adapter, not the only shape
+The firewall brain (rules, intent, audit, freeze) stops at one line: handing an already-decided payment to a payment provider. That line is now a named interface, `Provider` (`send`, `status`, `verify_webhook`), and PayPal is the first adapter behind it. Each provider is a **sealed box**: its own folder (`app/providers/paypal/`, `app/providers/mock/`), its own config slot (`PAYCANARY_PAYPAL_*`; a provider reads nothing outside its slot), its own labelled test identities, and no imports from any other provider. The only shared code is the interface and an exact-name registry (no fallback). Every payment records which `provider` it was routed to when it was created; that never changes, an adapter refuses a request addressed to another provider, and a webhook can only touch its own provider's payments. Ids, idempotency keys and error statuses carry the provider name (`paypal:PAYOUT-...`, `mock:MOCK-000001`, `paypal_error` / `provider_error`).
+- **Mock provider:** records "would have sent $X to Y" and returns deterministic ids, so volume and the attacker corpus run through the rules with zero API calls. The offline demo uses it.
+- **Routing:** per agent, `POST /api/agents/{id}/provider {"provider": "mock"}` (operator only, audited).
+- **What is verified across providers** (`python3 tools/score_providers.py`, `tests/test_provider_matrix.py`): the whole benchmark gets identical verdicts on every provider (371/371, same as the direct gate), no frozen payment reaches a provider, replays create one provider object, a failing provider fails closed, webhooks settle only their own payments. The structural rules are enforced by tests that read the source (`test_providers_boundary.py`, `_config_isolation`, `_fixtures`, `_routing`).
+- **Stripe (test mode):** the second real adapter, via Connect Transfers (`PAYCANARY_STRIPE_SECRET_KEY`; the client refuses any key that is not `sk_test_`/`rk_test_`). Stripe cannot pay an arbitrary e-mail, so a recipient must resolve to a connected account (explicit mapping, else a deterministic pick from a small test pool, else the send fails closed). `python3 tools/stripe_sandbox_setup.py probe|provision|fund` sets up test accounts and test balance; `python3 tools/score_providers_live.py --provider paypal|stripe` runs the corpus through a real sandbox.
+- **Honest scope:** PayPal (sandbox), Stripe (test mode) and the mock provider exist. Others are "adapter-shaped", not built. Sandbox-tested, not production-proven.
+- **Live proof status:** Stripe is proven end to end in test mode (repeated runs of the 371-payment benchmark: 234 real test transfers per run, the 137 frozen payments never reached Stripe, a replayed payment returned the same transfer, provider refusals failed closed). PayPal is built and verified offline against recorded fakes, and fail-closed behaviour was confirmed against the live sandbox API, but a successful live sandbox payout is **pending a funded sandbox account**: do not read this project as proven live on PayPal.
+
+## Policy profiles (named, versioned, pinned)
+A profile is a named bundle of exactly nine per-agent knobs (`hard_cap`, `active_hours`, `require_intent`, `new_payee_floor`, `fanout_k`, `cooldown_s`, `probation_abs`, `probation_mult`, `probation_hold`); every profile must set all nine, unknown keys are refused, and `mode`, `org_id`, tokens and `approved_payees` stay per-agent. `POST /api/profiles` creates the next version (versions are never edited in place); `POST /api/agents/{id}/profile` pins an agent to `name` or `name@version` (or null to unpin); `GET /api/agents/{id}/policy` shows what applies now. Resolution is: the agent's explicit setting, then its pinned profile, then the system default, then the operator's `platform_cap` as a hard ceiling on `hard_cap` (a profile can never lift an agent above it). An agent with no profile behaves exactly as before. Every decision carries a `policy_hash`; the full resolved policy (knobs, mode, platform cap, allowlist, and `gate_sha256`, the SHA-256 of `gate.py` as loaded when the process started; it identifies that file only, not the rest of the service) is written into the audit chain once per distinct policy (`policy_resolved`), so "what policy applied to this payment" is answered from a snapshot, not reconstructed. If a config change or a policy snapshot cannot be written to the audit log, the change or the decision is refused. `POST /api/profiles/presets` installs the `standard` / `strict` / `permissive` starter bundles (strict: cap 200, fan-out 2x, 30 min cooling-off; standard: cap 500, fan-out 3x, 15 min; permissive: cap 2000, fan-out 4x, 30 min; all require a stated intent, and none turns on `probation_hold`). Nothing installs them automatically. `probation_hold` only has an effect with `cooldown_s` > 0 (a profile that sets it with no cooldown is refused; a per-agent override that produces the combination shows a warning), its default is permanently off, and stored profile versions written before it existed resolve to off. Adding the field changes every agent's `policy_hash` once at upgrade (the snapshot body gained a key); that is not a policy change. With the flag off the gate behaves identically to the previous release at every cooldown value; the flag-off default also keeps one accepted quirk (with the probation review checked first, a payment just above the probation ceiling can be a flagged review while a slightly smaller one is a cooling-off hold), which turning the flag on removes. A cooling-off only releases itself when enrichment is on (`PAYCANARY_ENRICHMENT=1`); with enrichment off a held first payment waits for an operator indefinitely, so assigning a cooldown profile (and the dashboard and `/api/agents/{id}/policy`) shows a warning in that configuration. Numeric knobs reject NaN, Infinity and negatives.
+
+## Roll out safely: shadow, then enforce
+Per agent (`mode`) or globally (`PAYCANARY_MODE=shadow`). In **shadow** the gate classifies and logs everything but lets the payment proceed; the response carries `would_have: "freeze"`, `enforced: false`, and the dashboard shows a "would freeze" chip and counter, so a team can measure false positives before trusting it to block. Flip an agent to `enforce` with one call. The operator's platform cap is enforced even in shadow, and shadow-frozen payments do not teach the baseline.
+
+## Alerts
+Set `PAYCANARY_ALERT_URL`, `PAYCANARY_ALERT_SECRET`, optional `PAYCANARY_ALERT_ON=freeze,shadow_freeze,review`. Each event is POSTed as JSON (`payment.frozen`, `payment.would_freeze`, `payment.review`) with `X-PayCanary-Signature: t=<unix>,v1=<hmac_sha256(secret, "<t>.<body>")>`; verify it and reject timestamps older than 5 minutes (`app/notify.py: verify`). Delivery is out-of-band with 3 tries and a 5 s timeout; a dead receiver never delays or changes a payment, and every outcome is in the audit log.
+
+## Audit log
+Append-only, hash-chained and **keyed** (`GET /api/audit`, `GET /api/audit/verify`, operator only). It records every decision (verdict, reason, mode, enforced), provider result, release and deny (with who), config change (before/after), token issue, webhook, alert, and every denied privileged call, including an agent credential trying the control plane. No tokens or request bodies are ever written to it.
+
+How the tamper-evidence works, and where it stops:
+- SQLite triggers refuse UPDATE/DELETE, and each row's MAC covers the previous row's, so editing, reordering, replaying or deleting a past row breaks `verify`.
+- Rows are HMAC-SHA256 under an **audit key held outside the database** (`PAYCANARY_AUDIT_KEY`, or a 0600 file under `~/.paycanary/`, never next to the DB or its backups). Someone who can only write the SQLite file cannot drop the triggers, rewrite a row and recompute the chain: they cannot produce valid MACs. A log without a key (in-memory databases, or a keyless process) reports `keyed: false` and makes **no** tamper-evidence claim against a file-writer.
+- Every append is also written to an **anchor file** (`PAYCANARY_AUDIT_ANCHOR`, default `~/.paycanary/anchors/…`; each line carries its own MAC). `verify` checks every anchored `(seq, hash)` against the database, so chopping off the tail or swapping in a rebuilt chain is detected.
+- An existing unkeyed log is migrated in place: the first keyed write adds a seal row pinning the old chain head.
+- **Honest limit:** whoever owns the PayCanary host (holds both the key and the anchor file) can forge everything. For that threat, ship the anchor lines to storage the host cannot rewrite (a log service, a write-once bucket, another machine). Anchor writes are best-effort and not fsynced, so a power loss can lose the last anchor lines (which only narrows what truncation can be detected).
+
+## If PayCanary is down or confused
+Fail-closed, by construction and by test. The agent never holds PayPal credentials, so if PayCanary is down no money can move. If the gate itself throws, the payment is frozen; if no verdict can be reached (store error), the call returns 503 and nothing is sent; if PayPal does not confirm, the payment is `paypal_error`, never `sent`. Timeouts: PayCanary waits up to `PayPalClient(timeout=25)` for PayPal, so give your agent's HTTP client a longer timeout (30 s or more), and always send `PayPal-Request-Id` so a retry after a timeout cannot double-pay. A payout whose outcome PayPal never confirmed needs an operator to reconcile it against the PayPal transaction list (automatic reconciliation is roadmap). There is deliberately no fail-open switch.
+
+## Built vs roadmap
+Built and tested: the behavioural gate and cumulative/structuring/replay/lookalike guards; intent check; LLM narration, strange-catch and intent-read (budgeted, advisory only); operator/agent auth split; idempotency; shadow mode; hash-chained audit log; signed freeze/review webhook; fail-closed handling; AG Grid dashboard; optional real-PayPal history baseline; demo seed.
+Roadmap, not built: Payouts-compatible route; automatic reconciliation of unconfirmed payouts; named operators / roles beyond the single operator credential (the credential can be held by a person or a system); webhook delivery queue that survives a restart; anchoring the audit head externally; rate limiting; a hosted deploy; live FX rates (multi-currency uses a coarse static table today); production PayPal (this is sandbox only).
+
+## Who can do what (auth)
+Two principals, two credentials. **Operator** (the account owner: a person, a team's tooling, or the institution's own system; one credential today): `POST /api/agents` (guard config, `approved_payees`, caps), `POST /api/agents/{id}/token`, release/deny, the dashboard and its API. **Agent** (the AI): `POST /pay` and `POST /intent` only, and only as itself (a per-agent token binds it to one `agent_id`). The agent credential cannot change its own limits or release its own freezes; the releaser identity comes from the credential, never the request body. Tokens come from `PAYCANARY_OPERATOR_TOKEN` / `PAYCANARY_AGENT_TOKEN`, or are generated into a gitignored 0600 `.paycanary_tokens.json` on first run. The webhook route is public but unverified events never change a payment unless `PAYCANARY_DEV_WEBHOOKS=1`.
+
+## Limits that do not depend on the agent's word
+Per-payment cap (default $500, never above the operator's `PAYCANARY_PLATFORM_CAP`); **rolling cumulative caps** (executed + in-flight money, including released freezes) of 2x / 4x / 10x the cap per hour / day / week, and 2x / 5x per payee per day / week, so 30 payments of $499 can no longer move $14,970; a payee nobody has approved or paid before freezes above $100 whatever the agent's plan says; Multi-currency (USD, EUR, GBP, JPY, CAD, AUD): caps, cumulative windows and the fan-out guard are compared in USD-equivalent using a COARSE, STATIC reference table (`app/fx.py`, operator-overridable with `PAYCANARY_FX_JSON`, not live FX and not used to move money), while baselines, ceilings and z-scores stay per currency in that currency's own units; JPY amounts must be whole numbers; other currencies are refused.
+
+## Security model: credential isolation is the guarantee
+PayCanary governs payments that go through `POST /pay`. The guarantee holds **only if the agent cannot reach the PayPal credentials**:
+
+- Deploy the proxy as a **separate OS user or container** from the agent. The agent holds an agent id and calls `/pay` — never the PayPal Client ID/Secret.
+- The secret lives only in the proxy's `.env` (mode `0600`, owned by the proxy user, gitignored). The agent's principal must not be able to read it, the proxy's environment, or the SQLite file's host.
+- **If the agent can read the secret, PayCanary cannot stop it** — it can call PayPal directly and skip the goalie. Treat "agent cannot read the proxy secret" as a deploy-time invariant, and check it (`ls -l .env`; run the check as the agent user).
+
+## Honest limits
+PayCanary is an agent-payment guardrail (in-path hold + review), **not** a sandbox and not host security. It cannot stop:
+- **A compromised host or proxy user** — code execution as the proxy user reads the credentials and pays directly.
+- **Proxy-credential theft** — see above; the guarantee is conditional on credential isolation.
+- **A perfect mimic** — a normal-looking payment to an already-trusted payee at a normal amount and time is not "strange for this agent".
+- **Other rails** — money moved by any path other than the proxied `/pay` is out of scope.
+- **A patient escalation at the legitimate-growth rate.** The trusted baseline may grow at most 5%/day (a ratchet), so an attacker who grows spend at ~3%/day looks like a real vendor ramping up (in our corpus that walk is not caught and moves ~$168k over 120 days). Backstops: set a per-agent hard cap and review the review queue. A per-period budget is future work.
+- **Cold start.** With no payment history the statistical rules have nothing to compare against; only the hard cap, required intent and velocity apply.
+
+Tuned on a synthetic corpus (see `tests/poison_corpus.py`); thresholds are first guesses. Sandbox only.
+
+### LLM layer: measured with real Haiku (`python3 tools/score_llm.py`, ~115 calls, ~60k tokens per run)
+The model has no authority to move or release money: it only adds a calm note, or can add friction by raising an `allow` to a `review`; it cannot freeze, release or send. Narration is skipped (fail-open) when the model is down, junk, or over its daily budget; hard limits stay fail-closed.
+On hand-written labelled sets (author = builder, so a smoke test, not a benchmark): allowed-but-strange recall 77-83% with 0/40 false nags (misses are cadence cases the model cannot see, since it gets amounts and payees but not timing); stated-plan intent-read recall 14/14 with 0/24 false nags after one prompt fix; the lying-agent case (plan prose says AWS, payee list and payee say AttackerWallet) is caught; 5/5 narrations pass the calm-voice filter. Results vary a little run to run.
+
+### Multi-transaction attacks (measured on Security's 227-txn benchmark, `python3 tools/score_benchmark.py`)
+Per-payment rules cannot see structuring, replays, lookalikes or drains, so the gate also aggregates: rolling spend windows per agent and per payee; a not-yet-trusted payee gets a 24h/7d budget (so a payout split into $90 chunks stops by chunk 3-4); an identical (payee, amount) within 5 minutes is a possible replay (and `idempotency_key` makes exact retries return the first answer without a second payout); a new payee that imitates a known one (A1ice, AWS-Billing, Str1pe) freezes; a burst that would move more than 2.5x the agent's largest payment inside a minute freezes (a drain stops after ~2-3 payments, not 5); an unapproved payee that started at its peers' level and has since outgrown them by 4x needs operator approval.
+Result on the real gate: recall 115/156 (73.7%), precision 115/115 (100%), false nags 0/71. That recall counts every labelled transaction, so the unavoidable first copy of a replay and the first payments of a burst can never be frozen (replay is capped at 50%, bursts below that). The gate is designed to freeze once a pattern is visible, so the opening move of a brand-new slow or split pattern is the hardest case; see the benchmark harness to reproduce the full breakdown.
+
+### Real PayPal history as the baseline (optional)
+`POST /api/reporting/refresh` (operator) pulls the account's real outflow history from `GET /v1/reporting/transactions` into SQLite; with `PAYCANARY_REPORTING_BASELINE=1` the gate seeds each agent's baseline from it (payments PayCanary itself sent are excluded; seeded rows teach the baseline but never count as this agent's spend). It is never on the `/pay` path and degrades silently to PayCanary's own records if the scope or API is unavailable. A payee that is known but is now being paid at a different email address freezes (changed-bank-details guard). Seeding real history removes the cold-start false nags the benchmark shows with only 3 own observations per agent, at no cost in precision. It removes cold-start nags; it does not raise recall above a full own history.
+
+### Timing and cadence
+Each payee gets a rhythm learned from its last 7 executed payments (regular when 60% of gaps sit within 0.65-1.5x the median, and the period is at least a day). A regular bill paid on its usual cycle is allowed and scores lowest; the same payee paid in under half its usual interval is flagged `off-cycle` (review, never a freeze). The agent's working hours are learned from 20+ payments (explicit `active_hours` win). Cadence and gap are also given to the LLM so it can judge "monthly bill paid again 3 days later".
+
+### Known tuning trade-off: divergence on trusted payees
+The fast/slow divergence guard (recent payments running 2.5x the long-run level) used to freeze a legitimate trusted vendor's true-up followed by steady growth. For a TRUSTED payee it is now a review (the payee's own ratcheted ceiling still freezes real jumps); a not-yet-trusted payee still freezes. On the earlier real-world corpus this cut false nags substantially and cost a few points of recall, because accepting the legitimate spike widens the baseline that later attacks are judged against. The synthetic benchmark and poisoning corpus did not move. Revert is one line if a stricter posture is preferred.
+
+### Anti-poisoning (an agent training the gate with allowed, small steps)
+1. **Ratchet** — the trusted amount ceiling grows at most 5%/day regardless of payment count; amounts over 1.5× that ceiling are reviewed, over 2× frozen.
+2. **Trust needs time AND count** — a payee is only trusted after 3 executed payments *and* 7 days; until then the new-payee size rule applies.
+3. **Fast/slow divergence** — a per-payment fast EWMA vs slow EWMA; fast ≥ 1.6× slow is reviewed, ≥ 2.5× frozen, even when each step is small.
+Frozen payments never teach the baseline.

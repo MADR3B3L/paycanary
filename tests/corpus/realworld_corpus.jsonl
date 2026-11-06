@@ -1,0 +1,532 @@
+{"kind": "agent_config", "agent": "ap-bot-acme", "hard_cap": 5000.0, "active_hours": [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], "org_id": "org:ap-bot-acme"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2509.94, "ts": 152534.48893702094, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 3046.99, "ts": 220138.6701020972, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 80.28, "ts": 264845.1287433319, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 85.14, "ts": 342074.2081128994, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 163.36, "ts": 423782.0132210753, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2044.02, "ts": 500840.0167963973, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 82.33, "ts": 545361.838446129, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 227.43, "ts": 603416.6590946977, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 239.33, "ts": 636949.330124699, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 160.85, "ts": 665753.6476150003, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 222.64, "ts": 844624.2622841308, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 179.37, "ts": 892599.5143411863, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2147.66, "ts": 984897.7507421646, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 186.09, "ts": 1031429.3149435694, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Datadog", "amount": 515.05, "ts": 1066805.6778721705, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Datadog", "amount": 493.09, "ts": 1252324.2390046811, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 156.31, "ts": 1375167.922446401, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 93.29, "ts": 1551447.194083197, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 84.06, "ts": 1645461.816655534, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 86.29, "ts": 1811742.4897513613, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 142.18, "ts": 1925605.217622847, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 262.17, "ts": 2113426.5830913614, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 90.28, "ts": 2185634.9407877857, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 85.22, "ts": 2231104.878777751, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 1906.92, "ts": 2416729.291567121, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Datadog", "amount": 561.12, "ts": 2482071.9077110565, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2332.63, "ts": 2536345.076991657, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 78.46, "ts": 2562585.1814561114, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 86.57, "ts": 2661201.397461467, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 171.19, "ts": 2724669.376083228, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 89.25, "ts": 2816999.5508133774, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 346.71, "ts": 2984666.709922332, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 1960.47, "ts": 3127234.8284788164, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 88.28, "ts": 3163875.156364904, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "AWS", "amount": 1917.07, "ts": 3275799.4065095405, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 166.16, "ts": 3405388.746720606, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 210.04, "ts": 3523618.749364769, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Datadog", "amount": 544.85, "ts": 3694047.3303711903, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 219.59, "ts": 3880436.4784458857, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 83.65, "ts": 3998840.2361809723, "hour": 10, "currency": "USD"}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2379.81, "ts": 6749380.717308036, "hour": 10, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 0}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "Datadog", "amount": 406.6, "ts": 6919623.119456053, "hour": 13, "currency": "USD", "stated_intent_payees": ["Datadog"], "tid": 1}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "GitHub", "amount": 100.61, "ts": 7035846.008188456, "hour": 11, "currency": "USD", "stated_intent_payees": ["GitHub"], "tid": 2}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "Vercel", "amount": 184.28, "ts": 7135737.412888407, "hour": 9, "currency": "USD", "stated_intent_payees": ["Vercel"], "tid": 3}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "Twilio", "amount": 260.58, "ts": 7246253.150241254, "hour": 17, "currency": "USD", "stated_intent_payees": ["Twilio"], "tid": 4}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2860.0, "ts": 7332653.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 5}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2332.0, "ts": 7937453.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 6}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2471.92, "ts": 8542253.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 7}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2620.24, "ts": 9147053.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 8}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2777.45, "ts": 9751853.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "tid": 9}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "NewVendor0", "amount": 312.4, "ts": 9924653.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 10}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "NewVendor1", "amount": 312.4, "ts": 10097453.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 11}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "realbiz-ap-bot-acme-0", "amount": 374.88, "ts": 10098653.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-ap-bot-acme-0"], "tid": 12}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "realbiz-ap-bot-acme-1", "amount": 374.88, "ts": 10099853.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-ap-bot-acme-1"], "tid": 13}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "realbiz-ap-bot-acme-2", "amount": 374.88, "ts": 10101053.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-ap-bot-acme-2"], "tid": 14}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "realbiz-ap-bot-acme-3", "amount": 374.88, "ts": 10102253.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-ap-bot-acme-3"], "tid": 15}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "realbiz-ap-bot-acme-4", "amount": 374.88, "ts": 10103453.150241254, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-ap-bot-acme-4"], "tid": 16}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 23957240.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS", "Datadog", "GitHub", "Vercel", "Twilio"], "tid": 17}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "AWS", "amount": 2231.77, "ts": 24043640.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["AWS"], "recipient_email": "attacker@evil.example", "tid": 18}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "mule-smurf-01", "amount": 874.72, "ts": 24140840.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 19}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "mule-smurf-01", "amount": 874.72, "ts": 24151640.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 20}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "mule-smurf-01", "amount": 874.72, "ts": 24162440.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 21}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "mule-smurf-01", "amount": 874.72, "ts": 24173240.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 22}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "mule-smurf-01", "amount": 874.72, "ts": 24184040.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 23}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-0", "amount": 499.84, "ts": 24277640.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 24}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-1", "amount": 499.84, "ts": 24284840.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 25}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-2", "amount": 499.84, "ts": 24292040.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 26}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-3", "amount": 499.84, "ts": 24299240.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 27}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-4", "amount": 499.84, "ts": 24306440.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 28}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-5", "amount": 499.84, "ts": 24313640.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 29}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-6", "amount": 499.84, "ts": 24320840.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 30}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "fanout-mule-7", "amount": 499.84, "ts": 24328040.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 31}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "drain-payee-09", "amount": 4800, "ts": 24414440.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 32}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 949.7, "ts": 24587240.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 33}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 1804.42, "ts": 24760040.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 34}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 3428.4, "ts": 24932840.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 35}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 4500.0, "ts": 25105640.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 36}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 4500.0, "ts": 25278440.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 37}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "slow-trainer-07", "amount": 4500.0, "ts": 25451240.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 38}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537648.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 39}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537656.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 40}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537664.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 41}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537672.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 42}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537680.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 43}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537688.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 44}
+{"kind": "txn", "agent": "ap-bot-acme", "payee": "burst-mule-02", "amount": 624.8, "ts": 25537696.236180972, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 45}
+{"kind": "agent_config", "agent": "payroll-bot", "hard_cap": 12000.0, "active_hours": [8, 9, 10], "org_id": "org:payroll-bot"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3810.25, "ts": 245026.0175554877, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3082.55, "ts": 307581.5939058651, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5315.4, "ts": 417832.80809704895, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3844.42, "ts": 560980.9296024669, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3105.86, "ts": 666945.79128429, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3131.19, "ts": 695004.5903230397, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3845.6, "ts": 796970.4306033077, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4155.18, "ts": 954125.2327172926, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3076.7, "ts": 1072374.4789829399, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4122.12, "ts": 1102316.605774139, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5226.49, "ts": 1250540.1064084244, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4568.72, "ts": 1427884.6083959413, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4557.45, "ts": 1592470.9567735153, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5148.26, "ts": 1642377.6838971956, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3752.92, "ts": 1801565.1083596451, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5263.3, "ts": 1955794.2378351036, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3800.18, "ts": 2098062.5919159213, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3133.3, "ts": 2151453.1854258156, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4526.61, "ts": 2184786.613380732, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4203.89, "ts": 2341095.888401337, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4296.49, "ts": 2446264.5777739882, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4201.84, "ts": 2593240.9550130796, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4626.51, "ts": 2714778.863757853, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4614.85, "ts": 2846695.3130198075, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4151.65, "ts": 2940474.7825314873, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4632.96, "ts": 3083395.1626284057, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4149.19, "ts": 3222373.8363990434, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3081.26, "ts": 3251895.3401490953, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4584.06, "ts": 3361946.7245928817, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4183.99, "ts": 3449319.8090701145, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4609.13, "ts": 3570815.9495345317, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5075.68, "ts": 3718133.7566627087, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3129.61, "ts": 3846343.0511322552, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3132.16, "ts": 4004739.2159604216, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5149.81, "ts": 4067622.277874593, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4128.3, "ts": 4098566.2984482744, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3147.75, "ts": 4216088.0194540005, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5356.94, "ts": 4317149.886314169, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4175.45, "ts": 4443741.25417162, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5294.8, "ts": 4555653.819809856, "hour": 9, "currency": "USD"}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4193.88, "ts": 7237689.922386072, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 46}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3739.64, "ts": 7368048.813518273, "hour": 8, "currency": "USD", "stated_intent_payees": ["Bob Lee"], "tid": 47}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4560.42, "ts": 7507233.767305436, "hour": 9, "currency": "USD", "stated_intent_payees": ["Carol Diaz"], "tid": 48}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3116.67, "ts": 7672882.973749006, "hour": 10, "currency": "USD", "stated_intent_payees": ["Dan Park"], "tid": 49}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5173.17, "ts": 7803219.787624243, "hour": 9, "currency": "USD", "stated_intent_payees": ["Erin Falk"], "tid": 50}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4288.0, "ts": 7889619.787624243, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 51}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4452.0, "ts": 9099219.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 52}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4719.12, "ts": 10308819.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 53}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 5002.27, "ts": 11518419.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 54}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 5302.4, "ts": 12728019.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "tid": 55}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4204.84, "ts": 13937649.787624244, "hour": 9, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 56}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Bob Lee", "amount": 3844.63, "ts": 13937679.787624244, "hour": 9, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 57}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Carol Diaz", "amount": 4663.85, "ts": 13937709.787624244, "hour": 9, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 58}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Dan Park", "amount": 3068.74, "ts": 13937739.787624244, "hour": 9, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 59}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Erin Falk", "amount": 5280.8, "ts": 13937769.787624244, "hour": 9, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 60}
+{"kind": "txn", "agent": "payroll-bot", "payee": "NewVendor0", "amount": 2090.0, "ts": 14110569.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 61}
+{"kind": "txn", "agent": "payroll-bot", "payee": "NewVendor1", "amount": 2090.0, "ts": 14283369.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 62}
+{"kind": "txn", "agent": "payroll-bot", "payee": "realbiz-payroll-bot-0", "amount": 2508.0, "ts": 14284569.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-payroll-bot-0"], "tid": 63}
+{"kind": "txn", "agent": "payroll-bot", "payee": "realbiz-payroll-bot-1", "amount": 2508.0, "ts": 14285769.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-payroll-bot-1"], "tid": 64}
+{"kind": "txn", "agent": "payroll-bot", "payee": "realbiz-payroll-bot-2", "amount": 2508.0, "ts": 14286969.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-payroll-bot-2"], "tid": 65}
+{"kind": "txn", "agent": "payroll-bot", "payee": "realbiz-payroll-bot-3", "amount": 2508.0, "ts": 14288169.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-payroll-bot-3"], "tid": 66}
+{"kind": "txn", "agent": "payroll-bot", "payee": "realbiz-payroll-bot-4", "amount": 2508.0, "ts": 14289369.787624244, "hour": 8, "currency": "USD", "stated_intent_payees": ["realbiz-payroll-bot-4"], "tid": 67}
+{"kind": "txn", "agent": "payroll-bot", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 24514053.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong", "Bob Lee", "Carol Diaz", "Dan Park", "Erin Falk"], "tid": 68}
+{"kind": "txn", "agent": "payroll-bot", "payee": "Alice Wong", "amount": 4157.73, "ts": 24600453.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["Alice Wong"], "recipient_email": "attacker@evil.example", "tid": 69}
+{"kind": "txn", "agent": "payroll-bot", "payee": "mule-smurf-01", "amount": 5852.0, "ts": 24697653.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 70}
+{"kind": "txn", "agent": "payroll-bot", "payee": "mule-smurf-01", "amount": 5852.0, "ts": 24708453.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 71}
+{"kind": "txn", "agent": "payroll-bot", "payee": "mule-smurf-01", "amount": 5852.0, "ts": 24719253.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 72}
+{"kind": "txn", "agent": "payroll-bot", "payee": "mule-smurf-01", "amount": 5852.0, "ts": 24730053.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 73}
+{"kind": "txn", "agent": "payroll-bot", "payee": "mule-smurf-01", "amount": 5852.0, "ts": 24740853.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 74}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-0", "amount": 3344.0, "ts": 24834453.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 75}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-1", "amount": 3344.0, "ts": 24841653.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 76}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-2", "amount": 3344.0, "ts": 24848853.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 77}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-3", "amount": 3344.0, "ts": 24856053.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 78}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-4", "amount": 3344.0, "ts": 24863253.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 79}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-5", "amount": 3344.0, "ts": 24870453.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 80}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-6", "amount": 3344.0, "ts": 24877653.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 81}
+{"kind": "txn", "agent": "payroll-bot", "payee": "fanout-mule-7", "amount": 3344.0, "ts": 24884853.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 82}
+{"kind": "txn", "agent": "payroll-bot", "payee": "drain-payee-09", "amount": 11400, "ts": 24971253.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 83}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 6353.6, "ts": 25144053.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 84}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 10800.0, "ts": 25316853.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 85}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 10800.0, "ts": 25489653.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 86}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 10800.0, "ts": 25662453.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 87}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 10800.0, "ts": 25835253.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 88}
+{"kind": "txn", "agent": "payroll-bot", "payee": "slow-trainer-07", "amount": 10800.0, "ts": 26008053.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 89}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094461.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 90}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094469.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 91}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094477.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 92}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094485.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 93}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094493.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 94}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094501.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 95}
+{"kind": "txn", "agent": "payroll-bot", "payee": "burst-mule-02", "amount": 4180.0, "ts": 26094509.819809854, "hour": 8, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 96}
+{"kind": "agent_config", "agent": "ads-bot", "hard_cap": 8000.0, "active_hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "org_id": "org:ads-bot"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1682.98, "ts": 147990.94979291112, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 755.92, "ts": 187628.68090378464, "hour": 3, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 2103.39, "ts": 235760.3821468568, "hour": 0, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1724.7, "ts": 386540.2612166473, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "TikTokAds", "amount": 354.73, "ts": 463230.6005855079, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1179.69, "ts": 524487.9769164722, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1583.19, "ts": 578331.4685553783, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "TikTokAds", "amount": 285.79, "ts": 719963.9501282577, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1979.3, "ts": 750086.351998656, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1445.25, "ts": 880465.2875192481, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "TikTokAds", "amount": 725.15, "ts": 960981.1367704566, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1173.26, "ts": 1088023.7564396784, "hour": 21, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "TikTokAds", "amount": 668.84, "ts": 1114233.235794552, "hour": 3, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1043.49, "ts": 1173180.1615661571, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1432.47, "ts": 1279097.8291436157, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1430.12, "ts": 1427951.758648732, "hour": 2, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 428.78, "ts": 1543131.6469479525, "hour": 3, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1652.08, "ts": 1632083.0754198257, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 828.62, "ts": 1676034.6756886425, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "TikTokAds", "amount": 243.52, "ts": 1862518.870041564, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 554.13, "ts": 1984199.1236183923, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 599.6, "ts": 2113668.7705403278, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1488.72, "ts": 2151134.983316581, "hour": 1, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1203.73, "ts": 2224674.413186965, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1792.83, "ts": 2306537.9983478915, "hour": 22, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1176.77, "ts": 2452297.9057761948, "hour": 0, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2088.8, "ts": 2495639.416745203, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 930.28, "ts": 2564322.178746737, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2580.29, "ts": 2739267.4250580035, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2186.58, "ts": 2788848.9730283725, "hour": 6, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1399.46, "ts": 2918465.3969834675, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1565.67, "ts": 3070060.7475902583, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2001.98, "ts": 3102058.386537922, "hour": 3, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 3828.81, "ts": 3237378.0118733393, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1770.7, "ts": 3356146.1140261367, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "MetaAds", "amount": 1072.62, "ts": 3462925.4252580027, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1560.18, "ts": 3584183.664693351, "hour": 0, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 829.0, "ts": 3747462.683521693, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1028.43, "ts": 3849645.8377004815, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1477.94, "ts": 3912094.7707758397, "hour": 12, "currency": "USD"}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1891.88, "ts": 6603592.838576102, "hour": 10, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 97}
+{"kind": "txn", "agent": "ads-bot", "payee": "MetaAds", "amount": 856.19, "ts": 6669103.185089272, "hour": 13, "currency": "USD", "stated_intent_payees": ["MetaAds"], "tid": 98}
+{"kind": "txn", "agent": "ads-bot", "payee": "LinkedInAds", "amount": 329.6, "ts": 6812227.172461894, "hour": 20, "currency": "USD", "stated_intent_payees": ["LinkedInAds"], "tid": 99}
+{"kind": "txn", "agent": "ads-bot", "payee": "TikTokAds", "amount": 33.83, "ts": 6930956.635602649, "hour": 4, "currency": "USD", "stated_intent_payees": ["TikTokAds"], "tid": 100}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 3120.0, "ts": 7017356.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 101}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 1908.0, "ts": 7276556.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 102}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2022.48, "ts": 7535756.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 103}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2143.83, "ts": 7794956.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 104}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2272.46, "ts": 8054156.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "tid": 105}
+{"kind": "txn", "agent": "ads-bot", "payee": "MetaAds", "amount": 1683.33, "ts": 8054196.635602649, "hour": 3, "currency": "USD", "stated_intent_payees": ["GoogleAds", "MetaAds", "LinkedInAds", "TikTokAds"], "tid": 106}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2756.07, "ts": 8054236.635602649, "hour": 3, "currency": "USD", "stated_intent_payees": ["GoogleAds", "MetaAds", "LinkedInAds", "TikTokAds"], "tid": 107}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2118.44, "ts": 8054276.635602649, "hour": 3, "currency": "USD", "stated_intent_payees": ["GoogleAds", "MetaAds", "LinkedInAds", "TikTokAds"], "tid": 108}
+{"kind": "txn", "agent": "ads-bot", "payee": "MetaAds", "amount": 1344.14, "ts": 8054316.635602649, "hour": 3, "currency": "USD", "stated_intent_payees": ["GoogleAds", "MetaAds", "LinkedInAds", "TikTokAds"], "tid": 109}
+{"kind": "txn", "agent": "ads-bot", "payee": "NewVendor0", "amount": 537.5, "ts": 8227116.635602649, "hour": 0, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 110}
+{"kind": "txn", "agent": "ads-bot", "payee": "NewVendor1", "amount": 537.5, "ts": 8399916.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 111}
+{"kind": "txn", "agent": "ads-bot", "payee": "realbiz-ads-bot-0", "amount": 645.0, "ts": 8401116.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-ads-bot-0"], "tid": 112}
+{"kind": "txn", "agent": "ads-bot", "payee": "realbiz-ads-bot-1", "amount": 645.0, "ts": 8402316.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-ads-bot-1"], "tid": 113}
+{"kind": "txn", "agent": "ads-bot", "payee": "realbiz-ads-bot-2", "amount": 645.0, "ts": 8403516.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-ads-bot-2"], "tid": 114}
+{"kind": "txn", "agent": "ads-bot", "payee": "realbiz-ads-bot-3", "amount": 645.0, "ts": 8404716.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-ads-bot-3"], "tid": 115}
+{"kind": "txn", "agent": "ads-bot", "payee": "realbiz-ads-bot-4", "amount": 645.0, "ts": 8405916.63560265, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-ads-bot-4"], "tid": 116}
+{"kind": "txn", "agent": "ads-bot", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 23870494.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds", "MetaAds", "LinkedInAds", "TikTokAds"], "tid": 117}
+{"kind": "txn", "agent": "ads-bot", "payee": "GoogleAds", "amount": 2117.52, "ts": 23956894.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["GoogleAds"], "recipient_email": "attacker@evil.example", "tid": 118}
+{"kind": "txn", "agent": "ads-bot", "payee": "mule-smurf-01", "amount": 1505.0, "ts": 24054094.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 119}
+{"kind": "txn", "agent": "ads-bot", "payee": "mule-smurf-01", "amount": 1505.0, "ts": 24064894.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 120}
+{"kind": "txn", "agent": "ads-bot", "payee": "mule-smurf-01", "amount": 1505.0, "ts": 24075694.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 121}
+{"kind": "txn", "agent": "ads-bot", "payee": "mule-smurf-01", "amount": 1505.0, "ts": 24086494.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 122}
+{"kind": "txn", "agent": "ads-bot", "payee": "mule-smurf-01", "amount": 1505.0, "ts": 24097294.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 123}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-0", "amount": 860.0, "ts": 24190894.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 124}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-1", "amount": 860.0, "ts": 24198094.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 125}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-2", "amount": 860.0, "ts": 24205294.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 126}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-3", "amount": 860.0, "ts": 24212494.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 127}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-4", "amount": 860.0, "ts": 24219694.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 128}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-5", "amount": 860.0, "ts": 24226894.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 129}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-6", "amount": 860.0, "ts": 24234094.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 130}
+{"kind": "txn", "agent": "ads-bot", "payee": "fanout-mule-7", "amount": 860.0, "ts": 24241294.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 131}
+{"kind": "txn", "agent": "ads-bot", "payee": "drain-payee-09", "amount": 7600, "ts": 24327694.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 132}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 1634.0, "ts": 24500494.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 133}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 3104.6, "ts": 24673294.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 134}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 5898.74, "ts": 24846094.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 135}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 7200.0, "ts": 25018894.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 136}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 7200.0, "ts": 25191694.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 137}
+{"kind": "txn", "agent": "ads-bot", "payee": "slow-trainer-07", "amount": 7200.0, "ts": 25364494.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 138}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450902.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 139}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450910.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 140}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450918.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 141}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450926.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 142}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450934.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 143}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450942.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 144}
+{"kind": "txn", "agent": "ads-bot", "payee": "burst-mule-02", "amount": 1075.0, "ts": 25450950.77077584, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 145}
+{"kind": "agent_config", "agent": "intl-supply-bot", "hard_cap": 20000.0, "active_hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "org_id": "org:intl-supply-bot"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 451572.79, "ts": 269387.46058828407, "hour": 6, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 464674.55, "ts": 377566.31660842354, "hour": 7, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6907.37, "ts": 523053.71638537885, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 561505.86, "ts": 561154.4174146195, "hour": 1, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3473.18, "ts": 680264.0027168579, "hour": 10, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4070.19, "ts": 716051.2617611743, "hour": 17, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 516083.86, "ts": 873801.091011618, "hour": 13, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 5532.67, "ts": 982397.3705836325, "hour": 13, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4017.53, "ts": 1136209.928983603, "hour": 5, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4418.21, "ts": 1197975.0957892446, "hour": 19, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3262.71, "ts": 1237152.547808253, "hour": 0, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 4354.62, "ts": 1370012.4497958228, "hour": 6, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6640.77, "ts": 1546414.8987343782, "hour": 23, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 2981.99, "ts": 1643632.0145126681, "hour": 21, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 7324.82, "ts": 1758139.9463035245, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 507105.05, "ts": 1843715.6093685697, "hour": 2, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6466.91, "ts": 1970648.1276629346, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6232.11, "ts": 2045618.9121684914, "hour": 21, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 517005.56, "ts": 2233250.0038834475, "hour": 22, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 7367.04, "ts": 2376573.017570126, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6341.91, "ts": 2462809.0849689986, "hour": 6, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3915.19, "ts": 2600396.9084835593, "hour": 12, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3781.75, "ts": 2755992.417059582, "hour": 2, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3877.68, "ts": 2890093.5364715597, "hour": 1, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4731.88, "ts": 3055100.0085928463, "hour": 13, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6290.88, "ts": 3124995.5349462274, "hour": 1, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 507163.76, "ts": 3293309.177765055, "hour": 6, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 493143.19, "ts": 3354424.507961415, "hour": 9, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3942.68, "ts": 3424175.8743827296, "hour": 16, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 486074.58, "ts": 3571809.3221323704, "hour": 21, "currency": "JPY"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 5666.47, "ts": 3673218.6060930574, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3485.24, "ts": 3748316.6827831464, "hour": 22, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3523.29, "ts": 3912924.721199465, "hour": 2, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4406.64, "ts": 4011116.8815045333, "hour": 22, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 5519.98, "ts": 4163544.5422041193, "hour": 2, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6004.99, "ts": 4350611.558679654, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4085.94, "ts": 4383055.736131209, "hour": 10, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4227.32, "ts": 4474795.5781166935, "hour": 16, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3929.5, "ts": 4539960.507460129, "hour": 15, "currency": "EUR"}
+{"kind": "history", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 4626.42, "ts": 4599294.507874786, "hour": 18, "currency": "EUR"}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6025.44, "ts": 7273685.191668828, "hour": 9, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 146}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3527.66, "ts": 7430349.8770615505, "hour": 22, "currency": "USD", "stated_intent_payees": ["HanoiTextile"], "tid": 147}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3672.87, "ts": 7483235.563583751, "hour": 15, "currency": "EUR", "stated_intent_payees": ["MunichGmbH"], "tid": 148}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 529254.76, "ts": 7592856.969617377, "hour": 11, "currency": "JPY", "stated_intent_payees": ["OsakaKK"], "tid": 149}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 7740.0, "ts": 7679256.969617377, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 150}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6572.0, "ts": 8543256.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 151}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6966.32, "ts": 9407256.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 152}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 7384.3, "ts": 10271256.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 153}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 7827.36, "ts": 11135256.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 154}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 6465.41, "ts": 11221656.969617378, "hour": 2, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "tid": 155}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "HanoiTextile", "amount": 3598.55, "ts": 11308056.969617378, "hour": 2, "currency": "USD", "stated_intent_payees": ["HanoiTextile"], "tid": 156}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "MunichGmbH", "amount": 3706.51, "ts": 11394456.969617378, "hour": 2, "currency": "EUR", "stated_intent_payees": ["MunichGmbH"], "tid": 157}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "OsakaKK", "amount": 508268.14, "ts": 11480856.969617378, "hour": 2, "currency": "JPY", "stated_intent_payees": ["OsakaKK"], "tid": 158}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "NewVendor0", "amount": 2400.0, "ts": 11653656.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 159}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "NewVendor1", "amount": 2400.0, "ts": 11826456.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 160}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "realbiz-intl-supply-bot-0", "amount": 2880.0, "ts": 11827656.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-intl-supply-bot-0"], "tid": 161}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "realbiz-intl-supply-bot-1", "amount": 2880.0, "ts": 11828856.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-intl-supply-bot-1"], "tid": 162}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "realbiz-intl-supply-bot-2", "amount": 2880.0, "ts": 11830056.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-intl-supply-bot-2"], "tid": 163}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "realbiz-intl-supply-bot-3", "amount": 2880.0, "ts": 11831256.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-intl-supply-bot-3"], "tid": 164}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "realbiz-intl-supply-bot-4", "amount": 2880.0, "ts": 11832456.969617378, "hour": 0, "currency": "USD", "stated_intent_payees": ["realbiz-intl-supply-bot-4"], "tid": 165}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 24557694.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts", "HanoiTextile", "MunichGmbH", "OsakaKK"], "tid": 166}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "ShenzhenParts", "amount": 5121.92, "ts": 24644094.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["ShenzhenParts"], "recipient_email": "attacker@evil.example", "tid": 167}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "mule-smurf-01", "amount": 18000.0, "ts": 24741294.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 168}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "mule-smurf-01", "amount": 18000.0, "ts": 24752094.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 169}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "mule-smurf-01", "amount": 18000.0, "ts": 24762894.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 170}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "mule-smurf-01", "amount": 18000.0, "ts": 24773694.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 171}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "mule-smurf-01", "amount": 18000.0, "ts": 24784494.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 172}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-0", "amount": 106740.0, "ts": 24878094.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 173}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-1", "amount": 106740.0, "ts": 24885294.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 174}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-2", "amount": 106740.0, "ts": 24892494.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 175}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-3", "amount": 106740.0, "ts": 24899694.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 176}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-4", "amount": 106740.0, "ts": 24906894.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 177}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-5", "amount": 106740.0, "ts": 24914094.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 178}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-6", "amount": 106740.0, "ts": 24921294.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 179}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "fanout-mule-7", "amount": 106740.0, "ts": 24928494.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 180}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "drain-payee-09", "amount": 19000, "ts": 25014894.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 181}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 25187694.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 182}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 25360494.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 183}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 25533294.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 184}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 25706094.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 185}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 25878894.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 186}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "slow-trainer-07", "amount": 18000.0, "ts": 26051694.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 187}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138102.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 188}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138110.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 189}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138118.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 190}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138126.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 191}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138134.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 192}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138142.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 193}
+{"kind": "txn", "agent": "intl-supply-bot", "payee": "burst-mule-02", "amount": 133425.0, "ts": 26138150.507874787, "hour": 0, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 194}
+{"kind": "agent_config", "agent": "ops-petty", "hard_cap": 600.0, "active_hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], "org_id": "org:ops-petty"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 1.0, "ts": 234276.22036187068, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 34.47, "ts": 260669.44987084513, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 41.79, "ts": 368454.4549576456, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Staples", "amount": 58.44, "ts": 520994.2881826465, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 69.13, "ts": 606225.2664601343, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 91.86, "ts": 684327.3104850203, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 38.22, "ts": 788597.3674011554, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 33.24, "ts": 868947.0086980076, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 30.38, "ts": 935941.129986149, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 90.7, "ts": 1121750.6050782893, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 22.63, "ts": 1248687.2598190121, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 58.97, "ts": 1367727.9096874304, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 63.5, "ts": 1419771.1864521191, "hour": 21, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 78.15, "ts": 1569272.373186731, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 45.03, "ts": 1669900.0255956417, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 53.73, "ts": 1803867.4296774128, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 87.22, "ts": 1851950.1112944288, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 66.2, "ts": 1897101.58224348, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 26.76, "ts": 1953118.2947644829, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Staples", "amount": 45.37, "ts": 2135721.3095478565, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 67.66, "ts": 2170448.805372035, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 136.0, "ts": 2339872.5372467777, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 20.03, "ts": 2375888.79477934, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 81.87, "ts": 2478160.305711284, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Staples", "amount": 88.22, "ts": 2661557.853009549, "hour": 20, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 15.74, "ts": 2795228.77569728, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 60.6, "ts": 2859593.8324481086, "hour": 21, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 54.58, "ts": 3029503.2135327747, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 65.47, "ts": 3177652.228831226, "hour": 7, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 155.79, "ts": 3306417.508060856, "hour": 8, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 25.47, "ts": 3485454.6501140506, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Amazon", "amount": 108.98, "ts": 3601227.9911481244, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 63.66, "ts": 3693921.6768104406, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 55.61, "ts": 3862975.732067746, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 47.22, "ts": 4043127.3811539584, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 34.34, "ts": 4151630.4659769167, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Staples", "amount": 122.2, "ts": 4216869.957900873, "hour": 7, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "DoorDash", "amount": 66.29, "ts": 4255334.631924868, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 3.82, "ts": 4292604.374687404, "hour": 7, "currency": "USD"}
+{"kind": "history", "agent": "ops-petty", "payee": "Uber", "amount": 60.25, "ts": 4364248.432560419, "hour": 15, "currency": "USD"}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 1.0, "ts": 7041181.095721136, "hour": 13, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 195}
+{"kind": "txn", "agent": "ops-petty", "payee": "DoorDash", "amount": 29.59, "ts": 7120363.584559681, "hour": 14, "currency": "USD", "stated_intent_payees": ["DoorDash"], "tid": 196}
+{"kind": "txn", "agent": "ops-petty", "payee": "Amazon", "amount": 147.04, "ts": 7274917.541185302, "hour": 16, "currency": "USD", "stated_intent_payees": ["Amazon"], "tid": 197}
+{"kind": "txn", "agent": "ops-petty", "payee": "Staples", "amount": 80.09, "ts": 7342375.835179059, "hour": 12, "currency": "USD", "stated_intent_payees": ["Staples"], "tid": 198}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 64.8, "ts": 7428775.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 199}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 36.04, "ts": 7515175.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 200}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 38.2, "ts": 7601575.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 201}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 40.49, "ts": 7687975.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 202}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 42.92, "ts": 7774375.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "tid": 203}
+{"kind": "txn", "agent": "ops-petty", "payee": "NewVendor0", "amount": 31.25, "ts": 7947175.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 204}
+{"kind": "txn", "agent": "ops-petty", "payee": "NewVendor1", "amount": 31.25, "ts": 8119975.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 205}
+{"kind": "txn", "agent": "ops-petty", "payee": "realbiz-ops-petty-0", "amount": 37.5, "ts": 8121175.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["realbiz-ops-petty-0"], "tid": 206}
+{"kind": "txn", "agent": "ops-petty", "payee": "realbiz-ops-petty-1", "amount": 37.5, "ts": 8122375.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["realbiz-ops-petty-1"], "tid": 207}
+{"kind": "txn", "agent": "ops-petty", "payee": "realbiz-ops-petty-2", "amount": 37.5, "ts": 8123575.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["realbiz-ops-petty-2"], "tid": 208}
+{"kind": "txn", "agent": "ops-petty", "payee": "realbiz-ops-petty-3", "amount": 37.5, "ts": 8124775.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["realbiz-ops-petty-3"], "tid": 209}
+{"kind": "txn", "agent": "ops-petty", "payee": "realbiz-ops-petty-4", "amount": 37.5, "ts": 8125975.835179059, "hour": 7, "currency": "USD", "stated_intent_payees": ["realbiz-ops-petty-4"], "tid": 210}
+{"kind": "txn", "agent": "ops-petty", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 24322648.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber", "DoorDash", "Amazon", "Staples"], "tid": 211}
+{"kind": "txn", "agent": "ops-petty", "payee": "Uber", "amount": 44.08, "ts": 24409048.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["Uber"], "recipient_email": "attacker@evil.example", "tid": 212}
+{"kind": "txn", "agent": "ops-petty", "payee": "mule-smurf-01", "amount": 87.5, "ts": 24506248.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 213}
+{"kind": "txn", "agent": "ops-petty", "payee": "mule-smurf-01", "amount": 87.5, "ts": 24517048.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 214}
+{"kind": "txn", "agent": "ops-petty", "payee": "mule-smurf-01", "amount": 87.5, "ts": 24527848.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 215}
+{"kind": "txn", "agent": "ops-petty", "payee": "mule-smurf-01", "amount": 87.5, "ts": 24538648.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 216}
+{"kind": "txn", "agent": "ops-petty", "payee": "mule-smurf-01", "amount": 87.5, "ts": 24549448.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 217}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-0", "amount": 50.0, "ts": 24643048.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 218}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-1", "amount": 50.0, "ts": 24650248.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 219}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-2", "amount": 50.0, "ts": 24657448.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 220}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-3", "amount": 50.0, "ts": 24664648.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 221}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-4", "amount": 50.0, "ts": 24671848.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 222}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-5", "amount": 50.0, "ts": 24679048.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 223}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-6", "amount": 50.0, "ts": 24686248.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 224}
+{"kind": "txn", "agent": "ops-petty", "payee": "fanout-mule-7", "amount": 50.0, "ts": 24693448.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 225}
+{"kind": "txn", "agent": "ops-petty", "payee": "drain-payee-09", "amount": 600, "ts": 24779848.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 226}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 95.0, "ts": 24952648.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 227}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 180.5, "ts": 25125448.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 228}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 342.95, "ts": 25298248.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 229}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 540.0, "ts": 25471048.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 230}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 540.0, "ts": 25643848.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 231}
+{"kind": "txn", "agent": "ops-petty", "payee": "slow-trainer-07", "amount": 540.0, "ts": 25816648.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 232}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903056.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 233}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903064.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 234}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903072.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 235}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903080.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 236}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903088.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 237}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903096.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 238}
+{"kind": "txn", "agent": "ops-petty", "payee": "burst-mule-02", "amount": 62.5, "ts": 25903104.432560418, "hour": 7, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 239}
+{"kind": "agent_config", "agent": "saas-procure", "hard_cap": 6000.0, "active_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "org_id": "org:saas-procure"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 135.71, "ts": 245860.67977643525, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 183.95, "ts": 428496.09578162467, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 282.37, "ts": 481105.80137879227, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 170.86, "ts": 614214.2680290554, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 115.7, "ts": 655843.3160037368, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Snowflake", "amount": 1956.5, "ts": 844745.5469144295, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 130.46, "ts": 951604.2273278136, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 122.75, "ts": 1111331.8019750207, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Snowflake", "amount": 2677.0, "ts": 1216483.429608662, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 127.36, "ts": 1399307.1637464175, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 183.39, "ts": 1584819.3003985512, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 254.12, "ts": 1721233.9476673845, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 172.2, "ts": 1749258.936243296, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Notion", "amount": 102.9, "ts": 1908535.2675181155, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 201.91, "ts": 1981294.3014457733, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 191.79, "ts": 2073290.4921725881, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 151.76, "ts": 2247341.774803567, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Notion", "amount": 89.34, "ts": 2431420.1915632905, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 267.47, "ts": 2612170.9054699787, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 278.47, "ts": 2715376.0055582793, "hour": 14, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 205.27, "ts": 2759948.4318533335, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 114.5, "ts": 2935861.245059511, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Notion", "amount": 88.33, "ts": 2991039.145430125, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 124.1, "ts": 3027136.2123345155, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 334.79, "ts": 3055976.3342226795, "hour": 18, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 146.28, "ts": 3115124.907968198, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 312.23, "ts": 3234625.0519921025, "hour": 12, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 126.07, "ts": 3386026.0811176607, "hour": 11, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Notion", "amount": 93.63, "ts": 3428921.2639117828, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 180.83, "ts": 3477950.0099264784, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 168.64, "ts": 3611499.7026136024, "hour": 16, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 153.14, "ts": 3669373.101722476, "hour": 13, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 309.29, "ts": 3711611.020083082, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Linear", "amount": 144.11, "ts": 3833253.3816301622, "hour": 15, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Snowflake", "amount": 2904.35, "ts": 4008611.5817245, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 177.65, "ts": 4185188.8018946853, "hour": 10, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "PagerDuty", "amount": 268.51, "ts": 4218047.13442866, "hour": 17, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 183.76, "ts": 4279118.518130391, "hour": 9, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Figma", "amount": 204.34, "ts": 4388120.048129764, "hour": 19, "currency": "USD"}
+{"kind": "history", "agent": "saas-procure", "payee": "Snowflake", "amount": 2511.32, "ts": 4507363.133921476, "hour": 18, "currency": "USD"}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 2441.7, "ts": 7213878.334487231, "hour": 19, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 240}
+{"kind": "txn", "agent": "saas-procure", "payee": "Figma", "amount": 141.72, "ts": 7342399.143723896, "hour": 12, "currency": "USD", "stated_intent_payees": ["Figma"], "tid": 241}
+{"kind": "txn", "agent": "saas-procure", "payee": "Notion", "amount": 99.66, "ts": 7507671.889809774, "hour": 15, "currency": "USD", "stated_intent_payees": ["Notion"], "tid": 242}
+{"kind": "txn", "agent": "saas-procure", "payee": "PagerDuty", "amount": 302.77, "ts": 7669498.304865926, "hour": 13, "currency": "USD", "stated_intent_payees": ["PagerDuty"], "tid": 243}
+{"kind": "txn", "agent": "saas-procure", "payee": "Linear", "amount": 133.12, "ts": 7755537.24629097, "hour": 17, "currency": "USD", "stated_intent_payees": ["Linear"], "tid": 244}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 3280.0, "ts": 7841937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 245}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 2544.0, "ts": 10433937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 246}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 2696.64, "ts": 13025937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 247}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 2858.44, "ts": 15617937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 248}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 3029.94, "ts": 18209937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "tid": 249}
+{"kind": "txn", "agent": "saas-procure", "payee": "NewVendor0", "amount": 309.4, "ts": 18382737.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["NewVendor0"], "tid": 250}
+{"kind": "txn", "agent": "saas-procure", "payee": "NewVendor1", "amount": 309.4, "ts": 18555537.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["NewVendor1"], "tid": 251}
+{"kind": "txn", "agent": "saas-procure", "payee": "realbiz-saas-procure-0", "amount": 371.28, "ts": 18556737.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["realbiz-saas-procure-0"], "tid": 252}
+{"kind": "txn", "agent": "saas-procure", "payee": "realbiz-saas-procure-1", "amount": 371.28, "ts": 18557937.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["realbiz-saas-procure-1"], "tid": 253}
+{"kind": "txn", "agent": "saas-procure", "payee": "realbiz-saas-procure-2", "amount": 371.28, "ts": 18559137.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["realbiz-saas-procure-2"], "tid": 254}
+{"kind": "txn", "agent": "saas-procure", "payee": "realbiz-saas-procure-3", "amount": 371.28, "ts": 18560337.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["realbiz-saas-procure-3"], "tid": 255}
+{"kind": "txn", "agent": "saas-procure", "payee": "realbiz-saas-procure-4", "amount": 371.28, "ts": 18561537.24629097, "hour": 9, "currency": "USD", "stated_intent_payees": ["realbiz-saas-procure-4"], "tid": 256}
+{"kind": "txn", "agent": "saas-procure", "payee": "quick-settle-llc", "amount": 2000.0, "ts": 24465763.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake", "Figma", "Notion", "PagerDuty", "Linear"], "tid": 257}
+{"kind": "txn", "agent": "saas-procure", "payee": "Snowflake", "amount": 2066.89, "ts": 24552163.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["Snowflake"], "recipient_email": "attacker@evil.example", "tid": 258}
+{"kind": "txn", "agent": "saas-procure", "payee": "mule-smurf-01", "amount": 866.32, "ts": 24649363.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 259}
+{"kind": "txn", "agent": "saas-procure", "payee": "mule-smurf-01", "amount": 866.32, "ts": 24660163.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 260}
+{"kind": "txn", "agent": "saas-procure", "payee": "mule-smurf-01", "amount": 866.32, "ts": 24670963.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 261}
+{"kind": "txn", "agent": "saas-procure", "payee": "mule-smurf-01", "amount": 866.32, "ts": 24681763.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 262}
+{"kind": "txn", "agent": "saas-procure", "payee": "mule-smurf-01", "amount": 866.32, "ts": 24692563.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["mule-smurf-01"], "tid": 263}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-0", "amount": 495.04, "ts": 24786163.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-0"], "tid": 264}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-1", "amount": 495.04, "ts": 24793363.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-1"], "tid": 265}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-2", "amount": 495.04, "ts": 24800563.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-2"], "tid": 266}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-3", "amount": 495.04, "ts": 24807763.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-3"], "tid": 267}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-4", "amount": 495.04, "ts": 24814963.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-4"], "tid": 268}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-5", "amount": 495.04, "ts": 24822163.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-5"], "tid": 269}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-6", "amount": 495.04, "ts": 24829363.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-6"], "tid": 270}
+{"kind": "txn", "agent": "saas-procure", "payee": "fanout-mule-7", "amount": 495.04, "ts": 24836563.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["fanout-mule-7"], "tid": 271}
+{"kind": "txn", "agent": "saas-procure", "payee": "drain-payee-09", "amount": 5700, "ts": 24922963.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["drain-payee-09"], "tid": 272}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 940.58, "ts": 25095763.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 273}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 1787.09, "ts": 25268563.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 274}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 3395.48, "ts": 25441363.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 275}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 5400.0, "ts": 25614163.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 276}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 5400.0, "ts": 25786963.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 277}
+{"kind": "txn", "agent": "saas-procure", "payee": "slow-trainer-07", "amount": 5400.0, "ts": 25959763.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["slow-trainer-07"], "tid": 278}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046171.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 279}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046179.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 280}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046187.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 281}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046195.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 282}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046203.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 283}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046211.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 284}
+{"kind": "txn", "agent": "saas-procure", "payee": "burst-mule-02", "amount": 618.8, "ts": 26046219.133921474, "hour": 9, "currency": "USD", "stated_intent_payees": ["burst-mule-02"], "tid": 285}

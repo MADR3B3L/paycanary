@@ -1,0 +1,4 @@
+# Adds what the test suite needs on top of the runtime set. httpx powers fastapi's TestClient; without it the HTTP/auth
+# tests are skipped (the rest still run).
+-r requirements.txt
+httpx==0.28.1

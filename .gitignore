@@ -1,0 +1,31 @@
+# secrets and local state — never commit
+.env
+.env.*
+!.env.example
+*.rtf
+*.pem
+*.key
+secrets/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.sqlite3
+*.db
+.DS_Store
+.pytest_cache/
+.paycanary_tokens.json
+.feeds/
+
+# internal strategy / submission notes — not for the public repo
+docs/SUBMISSION/
+docs/ceo/
+docs/coordination/
+docs/REAL_WORLD_REACH_RESEARCH.md
+docs/DEV_EXPERIENCE_RESEARCH.md
+docs/DETECTION_DEPTH_RESEARCH.md
+
+docs/DETECTION_DEPTH_RESEARCH.md
+docs/DEV_EXPERIENCE_RESEARCH.md
+.stripe_test_accounts.json
+.stripe_onboarding_links.txt
