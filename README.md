@@ -6,6 +6,12 @@
 
 Built for the PayPal AI Hackathon (Oct 1 – Nov 12, 2026). **PayPal sandbox and Stripe test mode only.**
 
+**Run it in one command** (Python 3.13+, no keys, no PayPal account):
+```bash
+./run.sh
+```
+It builds a venv, installs two packages, prints the URL + operator token, and serves the full product with the real gate at http://127.0.0.1:8000/. Everything else below is optional — details in [Run it](#run-it) and [INSTALL.md](INSTALL.md).
+
 ## What it is, and why
 Money moves out of accounts all day, and almost nothing checks the payment that is inside every rule and still wrong: a payee that was never supposed to be paid, a brand-new account with no history, a slow drain trained to look normal. The usual guard is a spending limit, but a limit only stops what you already thought to forbid. The sharpest version of this problem today is the autonomous AI agent spending on someone's behalf — it can be prompt-injected, tricked, or simply mistaken, and a limit does not catch any of that — but the same hole is open to any payer.
 
@@ -147,6 +153,8 @@ How the tamper-evidence works, and where it stops:
 
 ## If PayCanary is down or confused
 Fail-closed, by construction and by test. The agent never holds PayPal credentials, so if PayCanary is down no money can move. If the gate itself throws, the payment is frozen; if no verdict can be reached (store error), the call returns 503 and nothing is sent; if PayPal does not confirm, the payment is `paypal_error`, never `sent`. Timeouts: PayCanary waits up to `PayPalClient(timeout=25)` for PayPal, so give your agent's HTTP client a longer timeout (30 s or more), and always send `PayPal-Request-Id` so a retry after a timeout cannot double-pay. A payout whose outcome PayPal never confirmed needs an operator to reconcile it against the PayPal transaction list (automatic reconciliation is roadmap). There is deliberately no fail-open switch.
+
+> **Known limitation — held payments need a human, and that has a cost.** PayCanary is default-deny: when it is unsure, money waits for an operator. That is the point, but be clear-eyed about it. At a small scale one person clears the queue in minutes. At a larger scale, a held payment sits until someone reviews it, and an unconfirmed payout sits until someone reconciles it by hand — there is no SLA, no auto-release on a timer for a hard freeze, and no automatic reconciliation yet. Before trusting this to real volume you want: named operators with on-call coverage, the automatic reconciliation on the roadmap, and a monitored queue so nothing ages silently. Until then, size the operator workload to the payment volume, or roll out in **shadow mode** first (below) so nothing is actually held while you measure how often it would freeze.
 
 ## Built vs roadmap
 Built and tested: the behavioural gate and cumulative/structuring/replay/lookalike guards; intent check; LLM narration, strange-catch and intent-read (budgeted, advisory only); operator/agent auth split; idempotency; shadow mode; hash-chained audit log; signed freeze/review webhook; fail-closed handling; AG Grid dashboard; optional real-PayPal history baseline; demo seed.
