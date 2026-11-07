@@ -224,10 +224,15 @@ class Store:
     def due_cooldowns(self, now):
         return [dict(r) for r in self.db.execute("SELECT * FROM payments WHERE status='frozen' AND release_at IS NOT NULL AND release_at<=? ORDER BY release_at", (now,)).fetchall()]
 
-    def claim_release(self, payment_id, by):
-        """Atomically take a still-frozen payment for release: exactly one caller wins, so a sweep can never send twice or override a denial."""
+    def claim_release(self, payment_id, by, ts=None):
+        """Atomically take a still-frozen payment for release: exactly one caller wins, so a sweep can never send twice or override a denial.
+        When `ts` is given, the spend-reservation timestamp moves to it in the SAME write that flips the status to 'pending',
+        so a concurrent payment can never see the release in flight (status='pending') while it still counts in the old window."""
         with self.lock:
-            n = self.db.execute("UPDATE payments SET status='pending', decided_by=?, release_at=NULL WHERE payment_id=? AND status='frozen'", (by, payment_id)).rowcount
+            if ts is None:
+                n = self.db.execute("UPDATE payments SET status='pending', decided_by=?, release_at=NULL WHERE payment_id=? AND status='frozen'", (by, payment_id)).rowcount
+            else:
+                n = self.db.execute("UPDATE payments SET status='pending', decided_by=?, release_at=NULL, ts=? WHERE payment_id=? AND status='frozen'", (by, ts, payment_id)).rowcount
             self.db.commit()
         return n == 1
 

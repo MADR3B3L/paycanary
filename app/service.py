@@ -408,11 +408,11 @@ class Service:
                 return self._hold_for_human(p, "re-check now freezes it: " + reason)
             if self.platform_cap is not None and cap_usd > self.platform_cap:
                 return self._hold_for_human(p, "re-check now exceeds the platform cap (%.2f USD): held for a human" % cap_usd)
-            if not self.store.claim_release(pid, "auto:cooldown"):
+            # the money moves NOW: flip the status to 'pending' AND book its spend at release time in ONE write, so a
+            # concurrent payment can never see this release in flight while it still counts in the original (held) hour.
+            # the original request time is preserved in the audit log below.
+            if not self.store.claim_release(pid, "auto:cooldown", ts=now):
                 return "skipped", "claimed elsewhere or denied"
-            # the money moves NOW: book its spend at release time, not the original (held) timestamp, so the
-            # rolling windows count it in the current hour. the original request time is preserved in the audit log.
-            self.store.update_payment(pid, ts=now)
         # record the release BEFORE sending: no money moves without a durable audit record.
         seq = self.audit.append("auto_released_after_cooldown", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
                                 detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked)})
@@ -716,11 +716,11 @@ class Service:
             self.audit.append("release_refused", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id,
                               detail={"reason": "over platform cap", "amount_usd": round(cap_usd, 2), "platform_cap": self.platform_cap})
             return {"ok": False, "reason": "release would exceed the platform cap (%.2f USD > %.2f): raise PAYCANARY_PLATFORM_CAP to release this" % (cap_usd, self.platform_cap)}
-        if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40)):          # atomic claim: only one of release / deny / sweep wins a frozen payment
+        # atomic claim: only one of release / deny / sweep wins a frozen payment. the money moves NOW, so flip the status
+        # to 'pending' AND book its spend at release time in ONE write — a concurrent payment can never see this release
+        # in flight while it still counts in the original (held) hour. the original request time is kept in the audit log below.
+        if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self.clock()):
             return {"ok": False, "reason": "payment is not frozen"}
-        # the money moves NOW: book its spend at release time so the rolling windows count it in the current hour,
-        # not the original (held) hour. the original request time is preserved in the audit log below.
-        self.store.update_payment(payment_id, ts=self.clock())
         seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
                                 detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
         if seq is None:

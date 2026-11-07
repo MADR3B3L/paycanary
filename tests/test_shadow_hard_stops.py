@@ -168,6 +168,52 @@ class ShadowHardStops(unittest.TestCase):
         self.assertAlmostEqual(after["ts"], now, delta=5)                 # spend booked at release time
         self.assertTrue(len(svc.store.window_rows("a1", now - 1800)) >= 1)
 
+    def test_release_moves_status_and_timestamp_in_one_write(self):
+        # Codex's concurrency finding: if the release flips status to 'pending' (which window_rows counts) in one write
+        # and moves ts in a SECOND write, a concurrent payment can see the release in flight but booked in the OLD hour.
+        # There must be NO observable DB state where the payment counts as in-flight (pending/sent) while ts is still the
+        # held timestamp. We snapshot (status, ts) at every commit during the release and assert that never happens.
+        import json as _json
+        HOUR = 3600.0
+        for path in ("manual", "auto"):
+            with self.subTest(path=path):
+                svc, pp = mk(mode="enforce", platform_cap=100000.0)
+                now = 1_700_000_000.0
+                pid = "pay-boundary-" + path
+                orig_ts = now - 2 * HOUR
+                svc.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": orig_ts, "payee": "NewVendor",
+                    "recipient": "x@y.com", "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+                    "verdict": "review" if path == "auto" else "freeze",
+                    "score_kind": "cooling-off" if path == "auto" else "amount",
+                    "reason": "cooling-off: first payment" if path == "auto" else "held", "status": "frozen",
+                    "provider": "paypal", "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie",
+                    "event_json": _json.dumps({"kind": "txn", "agent": "a1", "payee": "NewVendor", "recipient": "x@y.com",
+                                               "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "require_intent": False}),
+                    "narration": None, "risk": 0.5, "llm_flag": None, "mode": "enforce", "enforced": 1,
+                    "policy_hash": "h", "release_at": (orig_ts + 1800) if path == "auto" else None})
+                if path == "auto":
+                    svc.store.update_payment(pid, evidence_json=_json.dumps({"hint": "none", "checked": ["domain_age_days", "blocklist"]}))
+                # wrap the raw db.commit so we observe the row state a concurrent reader would see after every write
+                bad = []
+                real_commit = svc.store.db.commit
+                def spy():
+                    real_commit()
+                    r = svc.store.db.execute("SELECT status, ts FROM payments WHERE payment_id=?", (pid,)).fetchone()
+                    if r and r["status"] in ("pending", "sent", "settled") and abs(r["ts"] - orig_ts) < 1.0:
+                        bad.append((r["status"], r["ts"]))   # in-flight but still booked in the held hour: the bug
+                svc.store.db.commit = spy
+                try:
+                    if path == "auto":
+                        svc._try_auto_release(svc.store.payment(pid), now)
+                    else:
+                        svc.release(pid, by="operator")
+                finally:
+                    svc.store.db.commit = real_commit
+                self.assertEqual(bad, [], "release was observable as in-flight while still booked in the held hour")
+                after = svc.store.payment(pid)
+                self.assertEqual(after["status"], "sent")
+                self.assertAlmostEqual(after["ts"], now, delta=5)
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()
