@@ -144,6 +144,30 @@ class ShadowHardStops(unittest.TestCase):
         self.assertAlmostEqual(after["ts"], now, delta=5)                 # spend booked at release time
         self.assertTrue(len(svc.store.window_rows("a1", now - 1800)) >= 1)  # visible in the current window
 
+    def test_manual_release_books_spend_at_release_time(self):
+        # a manually released payment held for 2h must count its spend in the CURRENT hour, same as auto-release,
+        # or the rolling cap under-counts and later automatic payments slip through.
+        import json as _json
+        HOUR = 3600.0
+        svc, pp = mk(mode="enforce", platform_cap=100000.0)
+        now = 1_700_000_000.0
+        pid = "pay-manrel01"
+        orig_ts = now - 2 * HOUR
+        svc.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": orig_ts, "payee": "NewVendor",
+            "recipient": "x@y.com", "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+            "verdict": "freeze", "score_kind": "amount", "reason": "held", "status": "frozen",
+            "provider": "paypal", "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie",
+            "event_json": _json.dumps({"kind": "txn", "agent": "a1", "payee": "NewVendor", "recipient": "x@y.com",
+                                       "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "require_intent": False}),
+            "narration": None, "risk": 0.5, "llm_flag": None, "mode": "enforce", "enforced": 1,
+            "policy_hash": "h", "release_at": None})
+        rel = svc.release(pid, by="operator")
+        after = svc.store.payment(pid)
+        self.assertTrue(rel["ok"])
+        self.assertEqual(after["status"], "sent")
+        self.assertAlmostEqual(after["ts"], now, delta=5)                 # spend booked at release time
+        self.assertTrue(len(svc.store.window_rows("a1", now - 1800)) >= 1)
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

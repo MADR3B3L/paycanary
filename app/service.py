@@ -718,6 +718,9 @@ class Service:
             return {"ok": False, "reason": "release would exceed the platform cap (%.2f USD > %.2f): raise PAYCANARY_PLATFORM_CAP to release this" % (cap_usd, self.platform_cap)}
         if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40)):          # atomic claim: only one of release / deny / sweep wins a frozen payment
             return {"ok": False, "reason": "payment is not frozen"}
+        # the money moves NOW: book its spend at release time so the rolling windows count it in the current hour,
+        # not the original (held) hour. the original request time is preserved in the audit log below.
+        self.store.update_payment(payment_id, ts=self.clock())
         seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
                                 detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
         if seq is None:
