@@ -86,7 +86,8 @@ def service():
                            dev_webhooks=config.get("PAYCANARY_DEV_WEBHOOKS") == "1",
                            use_reporting=config.get("PAYCANARY_REPORTING_BASELINE") == "1",
                            default_mode=config.get("PAYCANARY_MODE", "enforce") or "enforce")
-        if config.get("PAYCANARY_ENRICHMENT") == "1":                 # opt-in: sends only the recipient DOMAIN to RDAP / DoH; scam feeds are matched locally
+        offline = demo_offline()                                      # the offline demo makes NO outbound calls: enrichment (RDAP/DoH) and alerts (outbound webhook) are network, so they stay off even if .env turns them on
+        if config.get("PAYCANARY_ENRICHMENT") == "1" and not offline:  # opt-in: sends only the recipient DOMAIN to RDAP / DoH; scam feeds are matched locally
             from .enrichers import Enrichers
             _service.enrichers = Enrichers(_store, feed_dir=config.ROOT / ".feeds")
             _service.audit.append("enrichment_enabled", "operator", detail={})
@@ -97,7 +98,7 @@ def service():
             from .reputation_store import Reputation
             _service.reputation = Reputation(load_reputation_key(config.ROOT), os.environ.get("PAYCANARY_REPUTATION_DB", str(config.ROOT / "paycanary_reputation.sqlite3")))
             _service.audit.append("reputation_enabled", "operator", detail={})
-        if config.get("PAYCANARY_ALERT_URL"):
+        if config.get("PAYCANARY_ALERT_URL") and not offline:         # alerts are an outbound webhook: never fired in the offline demo
             from .notify import Notifier
             _service.notifier = Notifier(config.get("PAYCANARY_ALERT_URL"), config.get("PAYCANARY_ALERT_SECRET"),
                                          on=[x.strip() for x in (config.get("PAYCANARY_ALERT_ON", "freeze") or "freeze").split(",") if x.strip()],

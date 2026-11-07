@@ -269,6 +269,86 @@ class ShadowHardStops(unittest.TestCase):
         self.assertEqual(out["status"], "frozen")                      # rolling cap catches it: stops at $189, not $209
         self.assertIn("cumulative", (out.get("reasons") or [""])[0].lower() + out.get("reason", "").lower())
 
+    def test_platform_cap_rejects_nan_and_nonfinite(self):
+        # Codex: a NaN platform cap defeats every `amount > cap` comparison, so everything sends. Reject it at construction.
+        for bad in (float("nan"), float("inf"), -float("inf"), 0.0, -5.0):
+            with self.subTest(cap=bad):
+                with self.assertRaises(ValueError):
+                    Service(Store(), FakePayPal(), clock=lambda: 1_700_000_000.0, default_require_intent=False,
+                            default_hard_cap=None, default_mode="enforce", platform_cap=bad)
+        # a finite positive cap and None both remain valid
+        Service(Store(), FakePayPal(), default_mode="enforce", platform_cap=100.0)
+        Service(Store(), FakePayPal(), default_mode="enforce", platform_cap=None)
+
+    def test_fx_override_cannot_redefine_usd_or_use_nonfinite(self):
+        # Codex: PAYCANARY_FX_JSON could set {"USD":0.01}, shrinking a $101 payment to $1.01 and sneaking it under a $100 cap.
+        import os as _os
+        from app import fx as _fx
+        old = _os.environ.get("PAYCANARY_FX_JSON")
+        try:
+            _os.environ["PAYCANARY_FX_JSON"] = '{"USD": 0.01, "EUR": "nan", "GBP": -2, "JPY": 0.01}'
+            t = _fx.table()
+            self.assertEqual(t["USD"], 1.0)                 # USD is the unit of account: never redefined
+            self.assertEqual(t["EUR"], 1.08)                # NaN ignored, default kept
+            self.assertEqual(t["GBP"], 1.27)                # negative ignored, default kept
+            self.assertEqual(t["JPY"], 0.01)                # a finite positive override IS honoured
+            self.assertEqual(_fx.to_usd_rate("USD"), 1.0)
+        finally:
+            if old is None: _os.environ.pop("PAYCANARY_FX_JSON", None)
+            else: _os.environ["PAYCANARY_FX_JSON"] = old
+
+    def test_cooldown_release_applies_current_intent_policy_not_the_held_one(self):
+        # Codex: a hold captured require_intent=False; an operator later turns required-intent ON; the sweep must
+        # re-apply the CURRENT policy and NOT auto-release a payment that now has no stated plan.
+        import json as _json
+        svc, pp = mk(mode="enforce", platform_cap=100000.0)
+        now = 1_700_000_000.0
+        pid = "pay-intentpolicy"
+        svc.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": now - 3600, "payee": "NewVendor",
+            "recipient": "x@y.com", "amount": 50.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+            "verdict": "review", "score_kind": "cooling-off", "reason": "cooling-off: first payment", "status": "frozen",
+            "provider": "paypal", "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie",
+            "event_json": _json.dumps({"kind": "txn", "agent": "a1", "payee": "NewVendor", "recipient": "x@y.com",
+                                       "amount": 50.0, "currency": "USD", "memo": "m", "hour": 0,
+                                       "stated_intent_payees": None, "intent_id": None, "require_intent": False}),
+            "narration": None, "risk": 0.1, "llm_flag": None, "mode": "enforce", "enforced": 1,
+            "policy_hash": "h", "release_at": now - 1})
+        svc.store.update_payment(pid, evidence_json=_json.dumps({"hint": "none", "checked": ["domain_age_days", "blocklist"]}))
+        svc.set_agent("a1", require_intent=True)            # operator turns required-intent ON while it is held
+        res = svc._try_auto_release(svc.store.payment(pid), now)
+        self.assertEqual(res[0], "held")                    # current policy requires an intent the payment never had: held for a human
+        self.assertEqual(svc.store.payment(pid)["status"], "frozen")
+        self.assertEqual(pp.calls, [])
+
+    def test_audit_append_under_a_wrong_key_is_refused(self):
+        # Codex: a chain sealed under key A can be APPENDED under key B (the row inserts), but verify() then fails.
+        # A money-moving caller trusts a non-None append, so append MUST refuse when the key does not match the sealed chain.
+        store = Store()
+        a = Service(store, FakePayPal(), clock=lambda: 1_700_000_000.0, default_require_intent=False,
+                    default_hard_cap=None, default_mode="enforce", audit_key="A" * 32)
+        a.pay(req(payee="seedchain"))                        # seals the chain under key A and writes a keyed decision
+        self.assertTrue(a.audit.verify()["ok"])
+        # reopen the SAME store with a DIFFERENT key
+        from app.audit import AuditLog
+        wrong = AuditLog(store, clock=lambda: 1_700_000_000.0, key="B" * 32)
+        seq = wrong.append("released", "operator", agent_id="a1", payment_id="x", detail={})
+        self.assertIsNone(seq)                               # refused: no row written under the wrong key
+        self.assertTrue(a.audit.verify()["ok"])              # chain still verifies under the real key A
+        # and a money-moving release through a wrong-key service fails closed (nothing sent)
+        pp2 = FakePayPal()
+        bad = Service(store, pp2, clock=lambda: 1_700_000_000.0, default_require_intent=False,
+                      default_hard_cap=None, default_mode="enforce", audit_key="B" * 32, platform_cap=100000.0)
+        pid = "frz-wrongkey"
+        bad.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": 1_700_000_000.0, "payee": "V",
+            "recipient": "x@y.com", "amount": 10.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+            "verdict": "freeze", "score_kind": "amount", "reason": "held", "status": "frozen", "provider": "paypal",
+            "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie", "event_json": "{}", "narration": None,
+            "risk": 0.5, "llm_flag": None, "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+        rel = bad.release(pid, by="operator")
+        self.assertFalse(rel["ok"])                          # audit refused under the wrong key -> fail closed
+        self.assertEqual(pp2.calls, [])
+        self.assertEqual(bad.store.payment(pid)["status"], "frozen")
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

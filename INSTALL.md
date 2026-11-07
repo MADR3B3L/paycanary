@@ -75,7 +75,7 @@ Good to know:
 ./run.sh test        # or: make test
 ```
 
-That installs the dev requirements into `.venv` and runs the whole unittest suite. A recent fresh-clone run reported 447 tests OK on Python 3.14 and 3.13. Or by hand:
+That installs the dev requirements into `.venv` and runs the whole unittest suite. A recent fresh-clone run reported 467 tests OK on Python 3.14 and 3.13. Or by hand:
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
@@ -94,7 +94,7 @@ What each requirements file is for:
 
 There is no Python `anthropic` package in the picture: the optional Claude Haiku narration calls the Anthropic HTTP API with the standard library. You do not install anything extra to turn it on, only supply a key (Tier 3).
 
-Optional: `cp .env.example .env` and fill it in when you move to Tier 3. The offline demo does not read it. `.env` is gitignored: keep it that way.
+Optional: `cp .env.example .env` and fill it in when you move to Tier 3. The offline demo still reads `.env` for non-network settings (caps, mode, DB path), but it makes **no outbound calls**: the Haiku narrator, enrichment lookups (RDAP/DoH) and outbound alerts are all forced off in offline mode even if `.env` turns them on. `.env` is gitignored: keep it that way.
 
 ---
 

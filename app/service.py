@@ -2,6 +2,7 @@
 and the PayPal webhook handler. The web layer (app/main.py) is a thin wrapper so this is unit-testable offline."""
 import hashlib
 import json
+import math
 import re
 import threading
 import time
@@ -31,6 +32,8 @@ class Service:
     def __init__(self, store, paypal=None, clock=time.time, webhook_id="", default_require_intent=True, default_hard_cap=DEFAULT_HARD_CAP, platform_cap=None, dev_webhooks=False, use_reporting=False, default_mode="enforce", providers=None, default_provider=None, audit_key=None, audit_anchor=None):
         if default_mode not in ("shadow", "enforce"):
             raise ValueError("default_mode must be shadow or enforce")
+        if platform_cap is not None and not (math.isfinite(platform_cap) and platform_cap > 0):
+            raise ValueError("platform_cap must be a finite positive number or None; a NaN/Inf/<=0 cap would silently let every payment through")
         self.default_mode = default_mode
         self.notifier = None                                 # optional app.notify.Notifier: signed outbound webhook on freeze/review
         self.use_reporting = use_reporting                 # seed baselines from stored real-PayPal history (see app/reporting.py); optional
@@ -394,7 +397,12 @@ class Service:
             old = json.loads(cur["event_json"] or "{}")
             hist = self._history(agent, now, (cur["recipient"], cur["payee"], cur["currency"]))
             txn = {k: old.get(k) for k in ("kind", "agent", "payee", "recipient", "amount", "currency", "memo", "hour", "stated_intent_payees", "intent_id", "require_intent")}
+            # re-resolve the CURRENT policy: the hold is re-judged as a payment made NOW. The original stated plan is kept
+            # as evidence (stated_intent_payees), but require_intent follows the policy in force at release, not the one
+            # captured when it was frozen — so an operator who turned required-intent ON while it was held is honoured.
+            pol = self.resolve_policy(agent)
             txn.update(ts=now, cooloff_released=True,                                # judge it as a payment made now, with the ORIGINAL plan, minus the cooling-off rule itself
+                       require_intent=pol["knobs"]["require_intent"],
                        fx=fxmod.to_usd_rate(cur["currency"]) or 1.0)                 # re-resolve FX so caps are compared in USD, not treated as USD
             net = self._network(cur["recipient"], cur["payee"], now)
             if net:

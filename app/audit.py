@@ -53,6 +53,21 @@ class AuditLog:
             self._sealed = self.store.db.execute("SELECT 1 FROM audit WHERE event=? LIMIT 1", (SEAL_EVENT,)).fetchone() is not None
         return self._sealed
 
+    def _key_matches_chain(self):
+        """True iff self.key is the key that sealed this chain. A successful INSERT is NOT proof of a valid audit
+        record: a chain sealed under key A can still be APPENDED under key B (the row inserts), but verify() then
+        fails. Before any money-moving caller trusts an append, the key must reproduce the seal row's own MAC.
+        Returns True for an unsealed chain (nothing to match yet) and for the no-key legacy mode."""
+        if not self.key:
+            return True
+        row = self.store.db.execute("SELECT prev_hash, ts, hash FROM audit WHERE event=? ORDER BY seq LIMIT 1", (SEAL_EVENT,)).fetchone()
+        if row is None:
+            return True                                                 # not sealed yet: the first keyed write will seal it
+        n = self.store.db.execute("SELECT count(*) FROM audit WHERE seq < (SELECT seq FROM audit WHERE event=? ORDER BY seq LIMIT 1)", (SEAL_EVENT,)).fetchone()[0]
+        seal = {"ts": row["ts"], "event": SEAL_EVENT, "actor": "system", "agent_id": None, "payment_id": None, "mode": None,
+                "detail": {"scheme": SCHEME, "legacy_head": row["prev_hash"], "legacy_rows": n}}
+        return hmac.compare_digest(str(row["hash"]), _mac(self.key, row["prev_hash"], seal))
+
     def _anchor(self, seq, h):
         if not (self.key and self.anchor_path):
             return
@@ -87,6 +102,8 @@ class AuditLog:
                 sealed = self._is_sealed()
                 if sealed and not self.key:
                     return None                                         # refuse to write unkeyed rows into a keyed chain
+                if sealed and self.key and not self._key_matches_chain():
+                    return None                                         # wrong key for this sealed chain: the row would insert but verify() would fail, so fail closed
                 if self.key and not sealed:                             # first keyed write: pin the legacy head, then continue under HMAC
                     n = self.store.db.execute("SELECT count(*) FROM audit").fetchone()[0]
                     seal = {"ts": now, "event": SEAL_EVENT, "actor": "system", "agent_id": None, "payment_id": None, "mode": None,
