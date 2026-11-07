@@ -716,11 +716,15 @@ class Service:
             self.audit.append("release_refused", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id,
                               detail={"reason": "over platform cap", "amount_usd": round(cap_usd, 2), "platform_cap": self.platform_cap})
             return {"ok": False, "reason": "release would exceed the platform cap (%.2f USD > %.2f): raise PAYCANARY_PLATFORM_CAP to release this" % (cap_usd, self.platform_cap)}
-        # atomic claim: only one of release / deny / sweep wins a frozen payment. the money moves NOW, so flip the status
-        # to 'pending' AND book its spend at release time in ONE write — a concurrent payment can never see this release
-        # in flight while it still counts in the original (held) hour. the original request time is kept in the audit log below.
-        if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self.clock()):
-            return {"ok": False, "reason": "payment is not frozen"}
+        # The booking below changes rolling spend history, so it must be serialised against the decision path
+        # (read-baseline -> classify -> insert). Under the SAME lock, an automatic payment can never read spend
+        # history that is missing a release booked in the same instant, nor book one the release has not yet seen.
+        with self._decide_lock:
+            # atomic claim: only one of release / deny / sweep wins a frozen payment. the money moves NOW, so flip the
+            # status to 'pending' AND book its spend at release time in ONE write — a concurrent payment can never see
+            # this release in flight while it still counts in the original (held) hour. original ts kept in the audit log.
+            if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self.clock()):
+                return {"ok": False, "reason": "payment is not frozen"}
         seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
                                 detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
         if seq is None:

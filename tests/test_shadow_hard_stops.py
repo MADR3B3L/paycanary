@@ -214,6 +214,61 @@ class ShadowHardStops(unittest.TestCase):
                 self.assertEqual(after["status"], "sent")
                 self.assertAlmostEqual(after["ts"], now, delta=5)
 
+    def test_manual_release_takes_the_decision_lock(self):
+        # Codex's reverse-ordering finding: a manual release that books spend must be serialised against the
+        # decision path (read-history -> classify -> insert) by the SAME lock, or an automatic payment that already
+        # read stale history can still send. Prove release() actually acquires self._decide_lock around its booking.
+        import threading as _th
+        svc, pp = mk(mode="enforce", platform_cap=100000.0)
+        now = 1_700_000_000.0
+        pid = "pay-locktest"
+        svc.store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": now, "payee": "V", "recipient": "x@y.com",
+            "amount": 10.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None, "verdict": "freeze",
+            "score_kind": "amount", "reason": "held", "status": "frozen", "provider": "paypal", "paypal_batch_id": None,
+            "paypal_status": None, "decided_by": "goalie", "event_json": "{}", "narration": None, "risk": 0.5,
+            "llm_flag": None, "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+        svc._decide_lock.acquire()                    # simulate a decision in flight holding the lock
+        done = _th.Event()
+        t = _th.Thread(target=lambda: (svc.release(pid, by="operator"), done.set()))
+        t.start()
+        blocked = not done.wait(0.3)                  # release must be unable to finish while the lock is held
+        self.assertTrue(blocked, "release() did not wait on the decision lock before booking spend")
+        self.assertEqual(svc.store.payment(pid)["status"], "frozen")   # not yet booked
+        svc._decide_lock.release()
+        t.join(2.0)
+        self.assertTrue(done.is_set())
+        self.assertEqual(svc.store.payment(pid)["status"], "sent")     # proceeds once the decision finishes
+
+    def test_release_then_automatic_payment_cannot_exceed_the_rolling_cap(self):
+        # End-to-end of Codex's repro: ~$90 already spent this hour, operator releases a $99 hold, then a $20
+        # automatic payment arrives. $90 + $99 + $20 = $209 > a $200 rolling hourly limit, so the $20 must FREEZE.
+        import json as _json
+        from tests.test_service import FakePayPal as _FP
+        pp = _FP()
+        t = [1_700_000_000.0]
+        svc = Service(Store(), pp, clock=lambda: t[0], default_require_intent=False, default_hard_cap=None, default_mode="enforce")
+        svc.set_agent("a1", hard_cap=100.0)           # WINDOW_MULT hourly = 2x hard_cap = $200 rolling/hour
+        now = t[0]
+        # $90 already executed this hour (two trusted sends well under the per-payment cap)
+        for i, amt in enumerate((45.0, 45.0)):
+            svc.store.insert_payment({"payment_id": "spent%d" % i, "agent_id": "a1", "ts": now - 60, "payee": "Known%d" % i,
+                "recipient": "k%d@y.com" % i, "amount": amt, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+                "verdict": "allow", "score_kind": "none", "reason": "ok", "status": "sent", "provider": "paypal",
+                "paypal_batch_id": "B", "paypal_status": "S", "decided_by": "h", "event_json": "{}", "narration": None,
+                "risk": 0.0, "llm_flag": None, "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+        # a $99 payment frozen earlier (held for the operator)
+        svc.store.insert_payment({"payment_id": "held99", "agent_id": "a1", "ts": now - 120, "payee": "BigVendor",
+            "recipient": "big@y.com", "amount": 99.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None,
+            "verdict": "freeze", "score_kind": "amount", "reason": "held", "status": "frozen", "provider": "paypal",
+            "paypal_batch_id": None, "paypal_status": None, "decided_by": "goalie", "event_json": "{}", "narration": None,
+            "risk": 0.5, "llm_flag": None, "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+        rel = svc.release("held99", by="operator")
+        self.assertTrue(rel["ok"])                                      # operator approves the hold: $189 now booked this hour
+        out = svc.pay({"agent_id": "a1", "payee": "AutoVendor", "recipient_email": "auto@y.com",
+                       "amount": "20.00", "currency": "USD", "memo": "m"})   # would bring the hour to $209
+        self.assertEqual(out["status"], "frozen")                      # rolling cap catches it: stops at $189, not $209
+        self.assertIn("cumulative", (out.get("reasons") or [""])[0].lower() + out.get("reason", "").lower())
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()
