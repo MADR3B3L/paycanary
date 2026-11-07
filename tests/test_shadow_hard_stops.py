@@ -349,6 +349,36 @@ class ShadowHardStops(unittest.TestCase):
         self.assertEqual(pp2.calls, [])
         self.assertEqual(bad.store.payment(pid)["status"], "frozen")
 
+    def test_corrupted_chain_under_the_correct_key_refuses_sends(self):
+        # Codex full-audit blocker: the key/seal check is not enough. If an existing decision row is tampered (chain
+        # broken) while the seal is untouched, reopening with the CORRECT key still verifies False — and a new payment
+        # must NOT send. A successful INSERT is not proof of a valid log; the chain must be healthy before any send.
+        store = Store()
+        clk = [1_700_000_000.0]                        # advance the clock between payments so velocity/drain guards never trip; only the audit gate can freeze
+        a = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=False,
+                    default_hard_cap=None, default_mode="enforce", audit_key="A" * 32)
+        a.pay(req(payee="seed1")); clk[0] += 86400     # seals the chain under key A, writes a keyed decision
+        a.pay(req(payee="seed2")); clk[0] += 86400
+        self.assertTrue(a.audit.verify()["ok"])
+        # corrupt a decision row's detail WITHOUT touching the seal (simulated DB corruption); drop the no-update guard first
+        try:
+            store.db.execute("DROP TRIGGER IF EXISTS audit_no_update")
+        except Exception:
+            pass
+        row = store.db.execute("SELECT seq FROM audit WHERE event='decision' ORDER BY seq LIMIT 1").fetchone()
+        store.db.execute("UPDATE audit SET detail=? WHERE seq=?", ('{"tampered":true}', row["seq"]))
+        store.db.commit()
+        # reopen the service with the CORRECT key A
+        clk[0] += 86400
+        pp = FakePayPal()
+        reopened = Service(store, pp, clock=lambda: clk[0], default_require_intent=False,
+                           default_hard_cap=None, default_mode="enforce", audit_key="A" * 32, platform_cap=100000.0)
+        self.assertFalse(reopened.audit.verify()["ok"])    # correct key, but the chain is broken
+        out = reopened.pay(req(payee="aftercorruption"))   # an ordinary allow that would normally send (no velocity/drain trip)
+        self.assertIn(out["status"], ("frozen", "fail_closed"))   # no money moves on a broken audit chain
+        self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(pp.calls, [])                     # nothing reached the provider
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

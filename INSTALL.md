@@ -75,7 +75,7 @@ Good to know:
 ./run.sh test        # or: make test
 ```
 
-That installs the dev requirements into `.venv` and runs the whole unittest suite. A recent fresh-clone run reported 467 tests OK on Python 3.14 and 3.13. Or by hand:
+That installs the dev requirements into `.venv` and runs the whole unittest suite. A recent fresh-clone run reported 468 tests OK on Python 3.14 and 3.13. Or by hand:
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
