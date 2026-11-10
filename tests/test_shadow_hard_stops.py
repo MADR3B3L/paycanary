@@ -488,6 +488,18 @@ class ShadowHardStops(unittest.TestCase):
         self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
         self.assertEqual(len(pp.calls), before)
 
+    def test_an_adapter_that_raises_mid_send_is_in_doubt_not_failed(self):
+        # Defense-in-depth (security fault-injection note): if a provider adapter raises an UNEXPECTED exception mid-send
+        # (not a structural ProviderError), _send must treat it as UNKNOWN -> in_doubt (reserved against the cap), never
+        # a confirmed 'failed' that drops from the cap.
+        svc, pp = mk()
+        def boom(_req): raise RuntimeError("adapter forgot to catch")
+        svc.providers.get("paypal").send = boom                 # make the adapter raise unexpectedly mid-send
+        out = svc.pay(req(amount="60.00"))
+        self.assertEqual(out["status"], "in_doubt"); self.assertNotEqual(out["status"], "sent")
+        reserved = sum(r["amount"] for r in svc.store.window_rows("a1", 1_700_000_000.0 - 3600))
+        self.assertGreaterEqual(reserved, 60.0)                 # the uncertain send is reserved against the cap
+
     def test_paypal_malformed_success_body_is_in_doubt_not_failed(self):
         # Codex confirm-pass edge 1: a 2xx whose batch_header is an unexpected type (not a dict with a batch id) means
         # PayPal most likely ACCEPTED the payout but we can't parse the id -> in_doubt (reserved), never a confirmed non-send.

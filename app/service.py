@@ -696,9 +696,12 @@ class Service:
         try:
             res = self.providers.get(prov).send(req)
         except ProviderError as err:
-            res = SendResult(prov, False, "failed", error=type(err).__name__)
-        except Exception as err:                                                # an adapter must never raise, but if it does: fail closed
-            res = SendResult(prov, False, "failed", error=type(err).__name__)
+            res = SendResult(prov, False, "failed", error=type(err).__name__)   # structural refusal (wrong/unknown provider): dispatch never happened -> confirmed non-send
+        except Exception as err:
+            # An adapter must never raise, but if a future one does mid-send, we do NOT know whether the request already
+            # left: treat it as UNKNOWN -> in_doubt (reserved against the cap), not a confirmed non-send. Defense in depth
+            # so "uncertainty always reserves" holds structurally even if an adapter forgets its own try/except.
+            res = SendResult(prov, False, "in_doubt", error=type(err).__name__)
         # An UNKNOWN outcome (lost response / 5xx) is NOT a confirmed non-send: the money may have moved. Book it as 'in_doubt'
         # so it is reserved against the rolling cap (window_rows counts it) until a status poll or webhook reconciles it.
         if not res.ok and res.state == "in_doubt":

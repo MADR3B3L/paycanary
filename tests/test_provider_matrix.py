@@ -109,7 +109,11 @@ class Matrix(unittest.TestCase):
         svc = Service(Store(), Boom(), clock=lambda: NOW, default_require_intent=False)
         svc.set_agent("agent", hard_cap=1000)
         out = svc.pay({"agent_id": "agent", "payee": "V", "recipient_email": "v@x.example", "amount": "20.00", "currency": "USD", "memo": ""})
-        self.assertEqual((out["status"], out["provider"]), ("provider_error", "boom"))
+        # An adapter that raises unexpectedly mid-send is UNKNOWN, not a confirmed non-send: the request may have left,
+        # so it is reserved against the cap (in_doubt), never reported as sent, and never silently dropped from accounting.
+        self.assertEqual((out["status"], out["provider"]), ("in_doubt", "boom"))
+        self.assertNotEqual(out["status"], "sent")
+        self.assertGreaterEqual(sum(r["amount"] for r in svc.store.window_rows("agent", NOW - 3600)), 20.0)
 
     def test_webhook_settles_the_payment_through_its_own_provider_only(self):
         for name in self.each():
