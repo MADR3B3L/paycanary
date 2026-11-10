@@ -488,6 +488,35 @@ class ShadowHardStops(unittest.TestCase):
         self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
         self.assertEqual(len(pp.calls), before)
 
+    def test_reversed_is_terminal_a_replayed_settle_webhook_cannot_un_reverse(self):
+        # Boundary finding (Dot's method, state-machine promise): a full reversal drops a payment from the cap. Webhooks
+        # are at-least-once and can reorder, so a replayed/out-of-order settle event must NOT flip reversed -> settled
+        # (that would re-count returned money against the cap and falsely record the payout as settled). reversed is terminal.
+        import json as _json
+        from app.providers.registry import Registry
+        from app.providers.stripe.adapter import StripeProvider
+        store = Store()
+        reg = Registry(); reg.register(StripeProvider(object(), webhook_secret=""))     # no secret -> dev_webhooks path
+        svc = Service(store, None, clock=lambda: 1_700_000_000.0, default_require_intent=False, default_hard_cap=None,
+                      default_mode="enforce", providers=reg, default_provider="stripe", dev_webhooks=True, platform_cap=100000.0)
+        pid = "pay-rev01"
+        store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": 1_700_000_000.0, "payee": "V", "recipient": "x@y.com",
+            "amount": 500.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None, "verdict": "allow",
+            "score_kind": "ok", "reason": "", "status": "sent", "provider": "stripe", "paypal_batch_id": None,
+            "paypal_status": None, "decided_by": None, "event_json": "{}", "narration": None, "risk": 0.1, "llm_flag": None,
+            "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+        store.update_payment(pid, provider_ref="stripe:tr_rev01")
+        def wh(obj): return svc.handle_webhook({}, _json.dumps({"type": obj.pop("_type"), "data": {"object": obj}}).encode(), provider="stripe")
+        # full reversal: drops from the cap
+        wh({"_type": "transfer.reversed", "id": "tr_rev01", "amount": 50000, "amount_reversed": 50000})
+        self.assertEqual(store.payment(pid)["status"], "reversed")
+        self.assertEqual(sum(r["amount"] for r in store.window_rows("a1", 0)), 0.0)   # money came back, excluded from cap
+        # replayed / reordered settle event must NOT un-reverse it
+        wh({"_type": "transfer.created", "id": "tr_rev01"})
+        wh({"_type": "transfer.updated", "id": "tr_rev01"})
+        self.assertEqual(store.payment(pid)["status"], "reversed")                    # still terminal
+        self.assertEqual(sum(r["amount"] for r in store.window_rows("a1", 0)), 0.0)   # returned money NOT re-counted
+
     def test_an_adapter_that_raises_mid_send_is_in_doubt_not_failed(self):
         # Defense-in-depth (security fault-injection note): if a provider adapter raises an UNEXPECTED exception mid-send
         # (not a structural ProviderError), _send must treat it as UNKNOWN -> in_doubt (reserved against the cap), never
