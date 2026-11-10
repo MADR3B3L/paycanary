@@ -275,6 +275,11 @@ class Service:
                 h.observe_identity(r["payee"], r["ts"], r["recipient"])            # identity carries across currencies; amount does NOT (a payee seen in USD is not a brand-new recipient when paid in EUR)
                 continue                                                          # one baseline per currency: amounts are never pooled across currencies
             h.observe(r["payee"], r["amount"], r["ts"], r["hour"], r["recipient"])
+        # Operator-released (or cooldown-released) freezes that moved money: record the recipient as a KNOWN destination
+        # for that payee (identity only, never the amount baseline), so a later payment to a DIFFERENT address for the
+        # same payee is still caught by the changed-destination guard. The operator approved that address; honor it.
+        for r in self.store.released_recipient_rows(agent_id):
+            h.observe_identity(r["payee"], r["ts"], r["recipient"])
         for r in self.store.attempt_rows(agent_id, now - G.VELOCITY_WINDOW_S):
             h.note_attempt(r["ts"], r["payee"])
         return h
@@ -508,6 +513,10 @@ class Service:
                 intent = self.store.intent(r["intent_id"]) if r["intent_id"] else self.store.latest_intent(agent, now - INTENT_TTL_S)
                 if r["intent_id"] and (intent is None or intent["agent_id"] != agent):
                     return {"decision": "reject", "status": "rejected", "reason": "unknown intent_id for this agent"}
+                # Freshness applies to an EXPLICIT intent_id too, not just the implicit latest_intent lookup: otherwise an
+                # agent replays a long-expired intent_id to satisfy require_intent with a plan that is no longer current.
+                if r["intent_id"] and intent is not None and float(intent["ts"]) < now - INTENT_TTL_S:
+                    return {"decision": "reject", "status": "rejected", "reason": "intent_id has expired (older than the intent freshness window)"}
                 stated = json.loads(intent["stated_payees_json"]) if intent else None
                 amount = float(r["amount"])
                 hour = time.gmtime(now).tm_hour

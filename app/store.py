@@ -155,6 +155,13 @@ class Store:
         return self.db.execute("SELECT payee, amount, ts, hour, recipient, currency FROM payments WHERE agent_id=? AND verdict IN ('allow','review') "
                                "AND status IN ('sent','settled') ORDER BY ts", (agent_id,)).fetchall()
 
+    def released_recipient_rows(self, agent_id):
+        """Payee->destination bindings from FROZEN payments an operator (or cooldown) RELEASED and that then moved money.
+        These must NOT teach the amount baseline (a released freeze is not 'normal spend'), but the operator DID approve
+        paying that payee at that destination, so it establishes the recipient for later changed-address detection."""
+        return self.db.execute("SELECT payee, ts, recipient, currency FROM payments WHERE agent_id=? AND verdict='freeze' "
+                               "AND status IN ('sent','settled') AND decided_by IS NOT NULL ORDER BY ts", (agent_id,)).fetchall()
+
     def attempt_times(self, agent_id, since_ts):
         return [r["ts"] for r in self.db.execute("SELECT ts FROM payments WHERE agent_id=? AND ts>=?", (agent_id, since_ts)).fetchall()]
 

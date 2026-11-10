@@ -66,6 +66,16 @@ class Auth(unittest.TestCase):
         self.c.post("/api/agents", json={"agent_id": "a1", "hard_cap": 100}, headers=OP)                                            # a config edit keeps the credential
         self.assertEqual(self.c.post("/pay", json={**PAY, "agent_id": "a1", "amount": "10.00"}, headers=mine).status_code, 200)
 
+    def test_whitespace_agent_id_cannot_bypass_a_per_agent_token(self):
+        # Codex finding 1: a holder of the SHARED token must not act as a token-protected agent by padding the id with
+        # whitespace. Auth looked up the raw " a1 " (no row -> empty cfg -> shared token accepted) while the payment path
+        # stripped to "a1". Auth must normalize the id the same way before the lookup + decision.
+        self.c.post("/api/agents/a1/token", headers=OP)                               # a1 now has its own token; shared is retired for it
+        for padded in (" a1", "a1 ", " a1 ", "\ta1\t", "a1\n"):
+            r = self.c.post("/pay", json={**PAY, "agent_id": padded, "amount": "10.00"}, headers=AG)   # shared token + padded id
+            self.assertEqual(r.status_code, 401, "padded id %r with shared token must be rejected" % padded)
+        self.assertEqual(self.pp.calls, [])                                           # nothing ever reached the provider
+
     def test_omitted_require_intent_does_not_switch_the_guard_off(self):
         self.c.post("/api/agents", json={"agent_id": "v", "hard_cap": 100}, headers=OP)         # the old code stored require_intent=False here
         out = self.c.post("/pay", json={**PAY, "amount": "20.00"}, headers=AG).json()

@@ -184,6 +184,18 @@ class StatusAndWebhooks(unittest.TestCase):
         other = json.dumps({"type": "charge.succeeded", "data": {"object": {"id": "ch_1"}}}).encode()
         self.assertEqual(q.verify_webhook({}, other).provider_id, "")              # only transfer ids are ever acted on
 
+    def test_partial_reversal_stays_settled_full_reversal_reverses(self):
+        # Codex 7-pass: a PARTIAL reversal must NOT drop the whole payment from cap accounting. Only a full reversal
+        # (amount_reversed >= amount) maps to 'reversed'; a partial one stays 'settled' so the net-spent money is still
+        # counted against the cap.
+        p, _ = prov(webhook_secret="whsec_test")
+        partial = json.dumps({"type": "transfer.reversed", "data": {"object": {"id": "tr_9", "amount": 10000, "amount_reversed": 3000}}}).encode()
+        self.assertEqual(p.verify_webhook({}, partial).state, "settled")           # 30% reversed -> still net spent -> counted
+        full = json.dumps({"type": "transfer.reversed", "data": {"object": {"id": "tr_9", "amount": 10000, "amount_reversed": 10000}}}).encode()
+        self.assertEqual(p.verify_webhook({}, full).state, "reversed")             # fully reversed -> money came back -> drops
+        bare = json.dumps({"type": "transfer.reversed", "data": {"object": {"id": "tr_9"}}}).encode()
+        self.assertEqual(p.verify_webhook({}, bare).state, "reversed")             # no amounts given -> conservative: treat as full
+
 
 if __name__ == "__main__":
     unittest.main()

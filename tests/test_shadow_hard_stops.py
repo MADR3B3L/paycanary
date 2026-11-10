@@ -449,6 +449,100 @@ class ShadowHardStops(unittest.TestCase):
         self.assertEqual(hist.payees.get("Acme"), 0)       # but no EUR amount trust yet (count 0): first-EUR-amount caution still applies
         self.assertNotIn("Acme", [p for p, amts in hist.by_payee.items()])   # no EUR amount baseline pooled from USD
 
+    def test_released_payment_establishes_the_recipient_for_later_address_checks(self):
+        # Codex 7-pass: when an operator releases a frozen payment to payee P at destination D, a LATER payment to P at a
+        # DIFFERENT destination must be caught as a changed-destination. The released payment establishes D as known for
+        # P (identity only, not the amount baseline).
+        store = Store()
+        clk = [1_700_000_000.0]
+        svc = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                      default_mode="enforce", platform_cap=1_000_000.0)
+        # first payment to a brand-new payee freezes (new payee / new destination); operator releases it
+        f = svc.pay({"agent_id": "a", "payee": "Vendor", "recipient_email": "pay@vendor.com", "amount": "9000.00", "currency": "USD", "memo": "m"})
+        self.assertEqual(f["status"], "frozen")
+        rel = svc.release(f["payment_id"], "operator"); self.assertTrue(rel["ok"])   # money moved to pay@vendor.com
+        clk[0] += 3600
+        # the released recipient is now a KNOWN destination for Vendor
+        hist = svc._history("a", clk[0], hint=("pay@vendor.com", "Vendor", "USD"))
+        self.assertIn("pay@vendor.com", hist.payee_recipients.get("Vendor", set()))
+        # but the amount baseline is NOT taught by the released freeze
+        self.assertNotIn("Vendor", [p for p, amts in hist.by_payee.items()])
+
+    def test_a_nonpayment_event_cannot_resurrect_a_deleted_anchor(self):
+        # Codex 7-pass finding 4: if the anchor is deleted mid-run, a NON-payment audit event (e.g. auth_denied) must not
+        # recreate a partial anchor file that then lets the next payment's verify pass. A deleted anchor stays deleted.
+        import os, tempfile
+        store = Store()
+        clk = [1_700_000_000.0]
+        anchor = os.path.join(tempfile.mkdtemp(), "anchor.log")
+        pp = FakePayPal()
+        svc = Service(store, pp, clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                      default_mode="enforce", audit_key="A" * 32, audit_anchor=anchor, platform_cap=100000.0)
+        svc.pay(req(payee="seed1")); clk[0] += 86400         # seals the chain, writes anchor
+        self.assertTrue(os.path.exists(anchor))
+        os.remove(anchor)                                    # tamper: anchor deleted while the service runs
+        svc.audit.append("auth_denied", "unknown", detail={"why": "probe"})   # a non-payment event
+        self.assertFalse(os.path.exists(anchor), "a non-payment event must NOT recreate the deleted anchor")
+        before = len(pp.calls)
+        out = svc.pay(req(payee="afterprobe"))               # the next payment re-verifies and sees the anchor still gone
+        self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(len(pp.calls), before)
+
+    def test_explicit_stale_intent_id_is_rejected_not_accepted(self):
+        # Codex 7-pass: supplying an OLD intent_id explicitly must still be subject to the 15-min freshness window,
+        # exactly like the implicit latest_intent lookup. An expired intent cannot satisfy require_intent.
+        store = Store()
+        clk = [1_700_000_000.0]
+        svc = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=True, default_hard_cap=None,
+                      default_mode="enforce")
+        reg = svc.register_intent("a", ["AWS"], "pay AWS")
+        iid = reg["intent_id"]
+        clk[0] += 16 * 60                                    # advance past the 15-minute freshness window
+        out = svc.pay({"agent_id": "a", "payee": "AWS", "recipient_email": "aws@x.com", "amount": "10.00",
+                       "currency": "USD", "memo": "m", "intent_id": iid})
+        self.assertEqual(out["decision"], "reject")
+        self.assertIn("expired", out["reason"])
+
+    def test_stripe_lost_response_is_in_doubt_and_reserved(self):
+        # Codex 7-pass finding 2: the Stripe adapter must treat a lost response / 5xx as in_doubt (reserved against the
+        # cap), not a confirmed failure. Mirror of the PayPal fix. Unit-test the adapter directly (no network).
+        from app.providers.stripe.adapter import StripeProvider
+        from app.providers.base import SendRequest
+        class RaisingClient:
+            def create_transfer(self, *a, **k): raise TimeoutError("lost")
+        prov = StripeProvider(RaisingClient(), accounts={"emails": {"x@y.com": "acct_test_1"}})
+        res = prov.send(SendRequest("stripe", "pay-1", "x@y.com", "100.00", "USD", "m", "k1"))
+        self.assertEqual(res.state, "in_doubt"); self.assertFalse(res.ok)
+        class FiveHundred:
+            def create_transfer(self, *a, **k): return 503, {"error": {"message": "server"}}
+        prov2 = StripeProvider(FiveHundred(), accounts={"emails": {"x@y.com": "acct_test_1"}})
+        res2 = prov2.send(SendRequest("stripe", "pay-2", "x@y.com", "100.00", "USD", "m", "k2"))
+        self.assertEqual(res2.state, "in_doubt")             # 5xx: outcome unknown, reserved
+        class FourHundred:
+            def create_transfer(self, *a, **k): return 400, {"error": {"message": "bad amount"}}
+        prov3 = StripeProvider(FourHundred(), accounts={"emails": {"x@y.com": "acct_test_1"}})
+        res3 = prov3.send(SendRequest("stripe", "pay-3", "x@y.com", "100.00", "USD", "m", "k3"))
+        self.assertEqual(res3.state, "failed")               # clean 4xx: confirmed non-send
+
+    def test_concurrent_first_requests_build_one_service_not_two(self):
+        # Codex 7-pass finding 3: two simultaneous FIRST requests must not each construct a Service (each with its own
+        # _decide_lock), which would defeat the cap serialisation. main.service() uses a lock + double-checked locking.
+        import threading
+        from app import main
+        from app.store import Store
+        main._store = Store(":memory:")
+        main._service = None
+        main._registry = None
+        seen = []
+        barrier = threading.Barrier(8)
+        def worker():
+            barrier.wait()
+            seen.append(id(main.service()))
+        ts = [threading.Thread(target=worker) for _ in range(8)]
+        for t in ts: t.start()
+        for t in ts: t.join()
+        self.assertEqual(len(set(seen)), 1, "all threads must get the same single Service instance")
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

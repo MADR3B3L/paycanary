@@ -49,17 +49,35 @@ class StripeProvider(Provider):
             status, body = self.client.create_transfer(to_minor(req.amount, req.currency), req.currency, dest, description="PayCanary st " + req.memo,
                                                        metadata={"paycanary_provider": "stripe", "paycanary_payment_id": req.payment_id, "paycanary_recipient": req.recipient[:100]},
                                                        idempotency_key=req.idempotency_key)
-        except Exception as err:                          # network failure, bad amount
-            return SendResult("stripe", False, "failed", error=type(err).__name__)
+        except Exception as err:
+            # Lost response (timeout, dropped connection, bad-amount client error all look alike here): the transfer MAY
+            # have been created before the response was lost, so the outcome is UNKNOWN -> in_doubt, reserved against the cap.
+            return SendResult("stripe", False, "in_doubt", error=type(err).__name__)
         if status in (200, 201) and isinstance(body, dict) and str(body.get("id", "")).startswith("tr_") and not body.get("reversed"):
             return SendResult("stripe", True, "sent", provider_id=body["id"], raw_status="created", http=status, detail={"destination": dest})
-        return SendResult("stripe", False, "failed", http=status, error=error_code(body))
+        # A clean 4xx is a client-side rejection Stripe recorded without moving money (confirmed non-send -> failed).
+        # A 5xx, or a 200 whose body is malformed/unparseable (we cannot confirm the transfer), is UNKNOWN -> in_doubt.
+        if isinstance(status, int) and 400 <= status < 500 and isinstance(body, dict):
+            return SendResult("stripe", False, "failed", http=status, error=error_code(body))
+        return SendResult("stripe", False, "in_doubt", http=status, error=error_code(body) if isinstance(body, dict) else "unparseable_response")
+
+    @staticmethod
+    def _partially_reversed(obj):
+        # A reversal removes money from cap accounting only when it is FULL. A PARTIAL reversal (amount_reversed < amount)
+        # leaves net money spent, so the payment must stay counted (settled), not dropped. amount / amount_reversed are
+        # integer minor units. Returns True only when we can SEE that the reversal is partial; absent amounts -> treat as
+        # full (the conservative drop), matching Stripe's boolean `reversed` where no partial amount is given.
+        amt, rev = obj.get("amount"), obj.get("amount_reversed")
+        return isinstance(amt, (int, float)) and isinstance(rev, (int, float)) and 0 < rev < amt
 
     def status(self, provider_id):
         status, body = self.client.get_transfer(provider_id)
         if status != 200 or not isinstance(body, dict):
             return StatusResult("stripe", provider_id, "failed", str(status))
-        return StatusResult("stripe", provider_id, "reversed" if body.get("reversed") else "settled", "reversed" if body.get("reversed") else "created")
+        if not body.get("reversed"):
+            return StatusResult("stripe", provider_id, "settled", "created")
+        partial = self._partially_reversed(body)
+        return StatusResult("stripe", provider_id, "settled" if partial else "reversed", "partially_reversed" if partial else "reversed")
 
     def verify_webhook(self, headers, body):
         try:
@@ -68,7 +86,14 @@ class StripeProvider(Provider):
             return WebhookEvent("stripe", "", parse_error=True)
         obj = ((event.get("data") or {}).get("object")) or {}
         etype = str(event.get("type", ""))[:80]
-        state = "reversed" if etype == "transfer.reversed" else ("settled" if etype in ("transfer.created", "transfer.updated") and not obj.get("reversed") else None)
+        # A transfer.reversed event is only a cap-removing "reversed" when the reversal is FULL; a partial reversal
+        # leaves net money spent, so it stays settled (still counted against the cap).
+        if etype == "transfer.reversed":
+            state = "settled" if self._partially_reversed(obj) else "reversed"
+        elif etype in ("transfer.created", "transfer.updated") and not obj.get("reversed"):
+            state = "settled"
+        else:
+            state = None
         ev = WebhookEvent("stripe", etype, provider_id=str(obj.get("id", "")) if str(obj.get("id", "")).startswith("tr_") else "", state=state,
                           raw_status=etype, raw=body.decode()[:20000], verification_configured=bool(self.webhook_secret))
         if self.webhook_secret:

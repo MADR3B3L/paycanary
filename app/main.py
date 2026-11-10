@@ -36,9 +36,16 @@ def operator(request: Request, authorization: str = Header(None)):
 
 
 def agent_auth(request, authorization, agent_id):
-    if not AUTH.agent_ok(authorization, agent_id, _store.agent(agent_id) if isinstance(agent_id, str) else {}):
+    # Normalize the id the SAME way the request validator will (strip surrounding whitespace) BEFORE we look up the
+    # agent and decide auth. Otherwise " bill-bot " authenticates against an empty config (no row) -> falls through to
+    # the shared token, while the payment path strips to "bill-bot" and acts as that token-protected agent. Auth
+    # identity and acting identity must be the one and same normalized string. RETURNS the normalized id so callers
+    # (e.g. pay_status ownership checks) compare against the SAME value the store holds, not the raw request string.
+    norm = agent_id.strip() if isinstance(agent_id, str) else agent_id
+    if not (isinstance(norm, str) and norm) or not AUTH.agent_ok(authorization, norm, _store.agent(norm)):
         _deny(request, "unknown", "agent credential invalid for this agent_id")
         raise HTTPException(401, "agent credential required (and valid for this agent_id)")
+    return norm
 
 
 def demo_offline():
@@ -77,10 +84,19 @@ def audit_creds():
     return auditkey.load(os.environ, os.environ.get("PAYCANARY_DB", str(config.ROOT / "paycanary.sqlite3")))
 
 
+_service_lock = threading.Lock()
+
+
 def service():
-    """ONE Service per process: its decide-lock must be shared by every request (a per-request Service re-opens the race)."""
+    """ONE Service per process: its decide-lock must be shared by every request (a per-request Service re-opens the race).
+    Construction is guarded by a module lock with double-checked locking: two simultaneous FIRST requests must not each
+    build their own Service (each with its own _decide_lock), or the cap serialisation is defeated and both read stale spend."""
     global _service
-    if _service is None:
+    if _service is not None:
+        return _service
+    with _service_lock:
+        if _service is not None:                                       # another thread built it while we waited for the lock
+            return _service
         from . import llm as L
         _ak, _aa = audit_creds()
         _service = Service(_store, None, providers=registry(), default_provider="paypal", audit_key=_ak, audit_anchor=_aa,
@@ -322,9 +338,9 @@ def cooldown_sweep():
 @app.get("/pay/{payment_id}")
 def pay_status(request: Request, payment_id: str, agent_id: str, authorization: str = Header(None)):
     """AGENT credential: the status of one of ITS OWN payments (so an agent can poll a held / cooling-off payment). Unknown or someone else's: 404."""
-    agent_auth(request, authorization, agent_id)
+    norm = agent_auth(request, authorization, agent_id)
     p = _store.payment(payment_id)
-    if not p or p["agent_id"] != agent_id:
+    if not p or p["agent_id"] != norm:                                  # compare against the NORMALIZED id (the form the store holds), not the raw query string
         raise HTTPException(404)
     return {"payment_id": payment_id, "status": p["status"], "decision": p["verdict"], "reason": p["reason"], "release_at": p.get("release_at"),
             "paypal": {"batch_id": p["paypal_batch_id"], "status": p["paypal_status"]} if p["paypal_batch_id"] else None}

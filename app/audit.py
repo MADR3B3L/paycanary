@@ -47,6 +47,9 @@ class AuditLog:
         self.store, self.clock, self.key, self.anchor_path = store, clock, key, (anchor_path if key else None)
         self._sealed = False
         self._chain_ok = None       # cached one-time integrity verdict (None=unchecked); set on first append / health check
+        # True once this chain is known to have an anchor on disk (either it exists now at startup, or we wrote one this
+        # process). While True, a now-missing anchor file is treated as a deletion (tamper) and is NOT silently recreated.
+        self._anchored_any = bool(self.anchor_path and os.path.exists(self.anchor_path))
 
     # ---- write ------------------------------------------------------------------------------------------------
     def _is_sealed(self):
@@ -98,15 +101,24 @@ class AuditLog:
     def _anchor(self, seq, h):
         if not (self.key and self.anchor_path):
             return
+        # If the anchor file is MISSING but there is already anchor history behind this row (an earlier seq was anchored
+        # in this process), the file was DELETED (tamper): do NOT recreate it. Recreating it with only the new line would
+        # mask the deletion, and a non-payment event (e.g. auth_denied) could silently re-establish a partial anchor that
+        # then lets the next payment's verify pass. Leaving it missing makes verify() report anchor_missing on a keyed
+        # chain so the money path fails closed. The legitimate first write (no prior anchored seq) still creates the file.
+        creat = os.O_CREAT
+        if self._anchored_any and not os.path.exists(self.anchor_path):
+            creat = 0                                                   # tamper: refuse to resurrect a deleted anchor
         try:
             d = os.path.dirname(self.anchor_path)
-            if d:
+            if d and creat:
                 os.makedirs(d, mode=0o700, exist_ok=True)
-            fd = os.open(self.anchor_path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+            fd = os.open(self.anchor_path, os.O_WRONLY | os.O_APPEND | creat, 0o600)
             try:
                 os.write(fd, ("%d %s %s\n" % (seq, h, _anchor_mac(self.key, seq, h))).encode())
             finally:
                 os.close(fd)
+            self._anchored_any = True
         except OSError:
             pass                                                        # best effort: a missed anchor only narrows what truncation can be detected; verify() still checks the chain
 
