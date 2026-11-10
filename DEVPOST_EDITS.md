@@ -1,45 +1,61 @@
-# Devpost corrections — paste before Thu noon Pacific
+# Devpost corrections — round 2 (paste before Thu noon Pacific)
 
-Edit at: https://devpost.com/software/paycanary (your login) → Edit → the story fields.
-These make the submission match what the build actually does (README + code are already correct).
-Honest, plain, three swaps. Everything else on the page is accurate — leave it.
+Round 1 (tamper-proof ×2, sanctions) is DONE and live. These are the remaining
+wording tightenings from the second review. All honest, all small. The README +
+code are already correct on every one of these — this is only the Devpost story page.
+
+Edit at: https://devpost.com/software/paycanary (your login) → Edit → the story box.
 
 ---
 
-## 1. "What it does" section
+## A. Benchmark wording — don't let it read as real production data
+
+The entry says the eight customer types were "real customer behavior." The README is
+explicit that these are synthetic / real-world-SHAPED test sets we wrote, not live data.
 
 FIND:
-> Every decision is written to a tamper-proof record.
+> against real customer behavior across eight different lives
 
 REPLACE WITH:
-> Every decision is written to a tamper-evident record — a hash-chained log where any edit, reorder, or deletion shows.
+> against real-world-shaped test customers across eight different lives
+
+(Optional, even clearer — if you want to add one clause at the end of that paragraph:)
+> These are our own test corpora, reproducible from the repo — not live-money evidence.
 
 ---
 
-## 2. "How we built it" section — the sanctions line
+## B. AI scope — it can also narrate ALLOWED payments
+
+The entry says the AI "only looks at the small slice the rules have already flagged."
+The code can also narrate an allowed payment. The accurate strength is that the AI is
+OUTSIDE the money-authorizing path — it can add friction, never release.
 
 FIND:
-> how old its domain is, whether it's on scam or sanctions lists), and fraud signals are shared across customers
+> a short Claude (Haiku) call only looks at the small slice the rules have already flagged — so the AI is used for judgment, not put in front of every transaction
 
 REPLACE WITH:
-> how old its domain is, whether it's on scam lists, and — where a sanctions list is wired in — whether a payee's exact ID is on it), and fraud signals are shared across customers
-
-(True to the build: the gate hard-freezes on an exact sanctions-ID match, but no sanctions
-data feed ships yet. "where a sanctions list is wired in" says that honestly without a footnote.)
+> a short Claude (Haiku) call explains the rules' decisions and can flag a payment for a human — it sits outside the money-authorizing path entirely, so it can add friction but can never release a payment
 
 ---
 
-## 3. "How we built it" section — second tamper mention
+## C. Release captions — a human OR an authorized system OR an opt-in cooldown
 
-FIND:
-> Every decision lands in a tamper-proof log.
+Some image captions say "Only a human can release." The code also supports an authorized
+system operator and an optional deterministic cooldown auto-release. The true invariant is
+that the AI narrator can never release — not that ONLY a human can.
+
+FIND (in the captions — may appear more than once):
+> Only a human can release a held payment — the AI never can.
 
 REPLACE WITH:
-> Every decision lands in that same tamper-evident log.
+> A held payment is released only by the operator (a person or an authorized system) or a strict re-checking rule — the AI never can.
 
 ---
 
-Nothing else over-claims. The human-releases / AI-can't-move-money spine, the
-"can't prompt-inject into releasing," the fraud-sharing "without sharing private
-transaction data," the zero-false-alarm benchmark, and all four red-team fixes
-are accurate as written.
+## Already correct, no change needed
+- "tamper-evident" (both spots) — fixed in round 1.
+- Sanctions line — fixed in round 1.
+- PayPal live-proof: the entry does not claim a live PayPal payout, and the README says
+  plainly it's pending a funded sandbox account. Nothing to change.
+- The human-releases / AI-can't-move-money spine, the prompt-injection point, the
+  fraud-sharing "without sharing private transaction data," and the red-team fixes are accurate.
