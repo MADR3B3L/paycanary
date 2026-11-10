@@ -99,33 +99,37 @@ def service():
             return _service
         from . import llm as L
         _ak, _aa = audit_creds()
-        _service = Service(_store, None, providers=registry(), default_provider="paypal", audit_key=_ak, audit_anchor=_aa,
-                           webhook_id="",
-                           platform_cap=float(config.get("PAYCANARY_PLATFORM_CAP", "5000") or 5000),
-                           dev_webhooks=config.get("PAYCANARY_DEV_WEBHOOKS") == "1",
-                           use_reporting=config.get("PAYCANARY_REPORTING_BASELINE") == "1",
-                           default_mode=config.get("PAYCANARY_MODE", "enforce") or "enforce")
+        # Build and FULLY configure a LOCAL service, then publish it to _service as the LAST statement. Otherwise a
+        # concurrent request could read a half-configured _service (e.g. before the reputation guard loads) and let a
+        # known-fraud recipient through until init finished. The early return above must only ever see a complete service.
+        svc = Service(_store, None, providers=registry(), default_provider="paypal", audit_key=_ak, audit_anchor=_aa,
+                      webhook_id="",
+                      platform_cap=float(config.get("PAYCANARY_PLATFORM_CAP", "5000") or 5000),
+                      dev_webhooks=config.get("PAYCANARY_DEV_WEBHOOKS") == "1",
+                      use_reporting=config.get("PAYCANARY_REPORTING_BASELINE") == "1",
+                      default_mode=config.get("PAYCANARY_MODE", "enforce") or "enforce")
         offline = demo_offline()                                      # the offline demo makes NO outbound calls: enrichment (RDAP/DoH) and alerts (outbound webhook) are network, so they stay off even if .env turns them on
         if config.get("PAYCANARY_ENRICHMENT") == "1" and not offline:  # opt-in: sends only the recipient DOMAIN to RDAP / DoH; scam feeds are matched locally
             from .enrichers import Enrichers
-            _service.enrichers = Enrichers(_store, feed_dir=config.ROOT / ".feeds")
-            _service.audit.append("enrichment_enabled", "operator", detail={})
+            svc.enrichers = Enrichers(_store, feed_dir=config.ROOT / ".feeds")
+            svc.audit.append("enrichment_enabled", "operator", detail={})
         if config.get("PAYCANARY_LOCAL_EVIDENCE") == "0":
-            _service.local_evidence = False
+            svc.local_evidence = False
         if config.get("PAYCANARY_REPUTATION") == "1":
             from .auth import load_reputation_key
             from .reputation_store import Reputation
-            _service.reputation = Reputation(load_reputation_key(config.ROOT), os.environ.get("PAYCANARY_REPUTATION_DB", str(config.ROOT / "paycanary_reputation.sqlite3")))
-            _service.audit.append("reputation_enabled", "operator", detail={})
+            svc.reputation = Reputation(load_reputation_key(config.ROOT), os.environ.get("PAYCANARY_REPUTATION_DB", str(config.ROOT / "paycanary_reputation.sqlite3")))
+            svc.audit.append("reputation_enabled", "operator", detail={})
         if config.get("PAYCANARY_ALERT_URL") and not offline:         # alerts are an outbound webhook: never fired in the offline demo
             from .notify import Notifier
-            _service.notifier = Notifier(config.get("PAYCANARY_ALERT_URL"), config.get("PAYCANARY_ALERT_SECRET"),
-                                         on=[x.strip() for x in (config.get("PAYCANARY_ALERT_ON", "freeze") or "freeze").split(",") if x.strip()],
-                                         audit=_service.audit)
+            svc.notifier = Notifier(config.get("PAYCANARY_ALERT_URL"), config.get("PAYCANARY_ALERT_SECRET"),
+                                    on=[x.strip() for x in (config.get("PAYCANARY_ALERT_ON", "freeze") or "freeze").split(",") if x.strip()],
+                                    audit=svc.audit)
         client = None if demo_offline() else L.from_config(_store)
         if client:
-            _service.llm = client
-            _service.on_decided = lambda pid: threading.Thread(target=_service.enrich, args=(pid,), daemon=True).start()
+            svc.llm = client
+            svc.on_decided = lambda pid: threading.Thread(target=svc.enrich, args=(pid,), daemon=True).start()
+        _service = svc                                                # publish only once fully configured
     return _service
 
 

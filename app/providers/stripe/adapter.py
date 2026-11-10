@@ -62,13 +62,20 @@ class StripeProvider(Provider):
         return SendResult("stripe", False, "in_doubt", http=status, error=error_code(body) if isinstance(body, dict) else "unparseable_response")
 
     @staticmethod
-    def _partially_reversed(obj):
-        # A reversal removes money from cap accounting only when it is FULL. A PARTIAL reversal (amount_reversed < amount)
-        # leaves net money spent, so the payment must stay counted (settled), not dropped. amount / amount_reversed are
-        # integer minor units. Returns True only when we can SEE that the reversal is partial; absent amounts -> treat as
-        # full (the conservative drop), matching Stripe's boolean `reversed` where no partial amount is given.
+    def _reversal_releases_cap(obj):
+        """Does this reversal remove the money from cap accounting? Only a FULL reversal does (the money came back).
+        Returns True = release (map to 'reversed'); False = keep reserved (map to 'settled'). Cases:
+          - no amounts at all: a bare legitimate reversal event -> full -> release.
+          - both amounts numeric and amount_reversed >= amount (>0): full -> release.
+          - both amounts numeric and 0 < amount_reversed < amount: PARTIAL -> keep reserved.
+          - anything malformed (only one amount present, non-numeric, negative, zero amount): we cannot trust it is a
+            full reversal, so be conservative and KEEP the money reserved (a signed-but-malformed event must not release)."""
         amt, rev = obj.get("amount"), obj.get("amount_reversed")
-        return isinstance(amt, (int, float)) and isinstance(rev, (int, float)) and 0 < rev < amt
+        if amt is None and rev is None:
+            return True                                                 # bare reversal event, no partial info -> full
+        if isinstance(amt, (int, float)) and isinstance(rev, (int, float)) and amt > 0 and rev >= 0:
+            return rev >= amt                                           # clean numbers: release only on full
+        return False                                                    # malformed / inconsistent -> keep reserved (conservative)
 
     def status(self, provider_id):
         status, body = self.client.get_transfer(provider_id)
@@ -76,8 +83,8 @@ class StripeProvider(Provider):
             return StatusResult("stripe", provider_id, "failed", str(status))
         if not body.get("reversed"):
             return StatusResult("stripe", provider_id, "settled", "created")
-        partial = self._partially_reversed(body)
-        return StatusResult("stripe", provider_id, "settled" if partial else "reversed", "partially_reversed" if partial else "reversed")
+        full = self._reversal_releases_cap(body)
+        return StatusResult("stripe", provider_id, "reversed" if full else "settled", "reversed" if full else "partially_reversed")
 
     def verify_webhook(self, headers, body):
         try:
@@ -89,7 +96,7 @@ class StripeProvider(Provider):
         # A transfer.reversed event is only a cap-removing "reversed" when the reversal is FULL; a partial reversal
         # leaves net money spent, so it stays settled (still counted against the cap).
         if etype == "transfer.reversed":
-            state = "settled" if self._partially_reversed(obj) else "reversed"
+            state = "reversed" if self._reversal_releases_cap(obj) else "settled"
         elif etype in ("transfer.created", "transfer.updated") and not obj.get("reversed"):
             state = "settled"
         else:

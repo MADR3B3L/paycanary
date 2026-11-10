@@ -214,6 +214,10 @@ class AuditLog:
         if lines is None:
             st = "missing" if n else "empty"
             return out(not n, n, None, "anchor_missing" if n else None, keyed, sealed_at, {"status": st, "entries": 0})
+        if not lines and n:
+            # the anchor file exists but is EMPTY (truncated) on a chain that has rows: the published (seq,hash) entries
+            # were wiped, which is exactly the tail-truncation evidence the anchor exists to preserve. Treat as missing/tamper.
+            return out(False, n, None, "anchor_missing", keyed, sealed_at, {"status": "emptied", "entries": 0})
         for ln in lines:
             parts = ln.split(" ")
             try:

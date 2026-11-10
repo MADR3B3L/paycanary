@@ -488,6 +488,82 @@ class ShadowHardStops(unittest.TestCase):
         self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
         self.assertEqual(len(pp.calls), before)
 
+    def test_paypal_malformed_success_body_is_in_doubt_not_failed(self):
+        # Codex confirm-pass edge 1: a 2xx whose batch_header is an unexpected type (not a dict with a batch id) means
+        # PayPal most likely ACCEPTED the payout but we can't parse the id -> in_doubt (reserved), never a confirmed non-send.
+        from app.providers.paypal.adapter import PayPalProvider
+        from app.providers.base import SendRequest
+        class Malformed:
+            def create_payout(self, *a, **k): return 201, {"batch_header": "oops-a-string"}   # wrong type
+        res = PayPalProvider(Malformed()).send(SendRequest("paypal", "p1", "x@y.com", "100.00", "USD", "m", "k1"))
+        self.assertEqual(res.state, "in_doubt"); self.assertFalse(res.ok)
+        class ListHdr:
+            def create_payout(self, *a, **k): return 200, {"batch_header": ["nope"]}
+        self.assertEqual(PayPalProvider(ListHdr()).send(SendRequest("paypal", "p2", "x@y.com", "100.00", "USD", "m", "k2")).state, "in_doubt")
+        class CleanFail:
+            def create_payout(self, *a, **k): return 400, {"name": "VALIDATION_ERROR"}
+        self.assertEqual(PayPalProvider(CleanFail()).send(SendRequest("paypal", "p3", "x@y.com", "100.00", "USD", "m", "k3")).state, "failed")
+
+    def test_emptied_audit_anchor_is_treated_as_tampered(self):
+        # Codex confirm-pass edge 2: truncating the anchor to an EMPTY file (not deleting it) must not pass verification.
+        # An empty anchor on a chain with rows wiped the published entries -> tamper -> fail closed.
+        import os, tempfile
+        store = Store()
+        clk = [1_700_000_000.0]
+        anchor = os.path.join(tempfile.mkdtemp(), "anchor.log")
+        svc = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                      default_mode="enforce", audit_key="A" * 32, audit_anchor=anchor, platform_cap=100000.0)
+        svc.pay(req(payee="seed1")); clk[0] += 86400
+        self.assertTrue(svc.audit.verify()["ok"])
+        open(anchor, "w").close()                              # truncate to empty (not delete)
+        v = svc.audit.verify()
+        self.assertFalse(v["ok"]); self.assertEqual(v["reason"], "anchor_missing")
+        clk[0] += 86400
+        pp = FakePayPal()
+        reopened = Service(store, pp, clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                           default_mode="enforce", audit_key="A" * 32, audit_anchor=anchor, platform_cap=100000.0)
+        out = reopened.pay(req(payee="afteremptyanchor"))
+        self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(pp.calls, [])
+
+    def test_service_is_published_only_fully_configured(self):
+        # Codex confirm-pass edge 3: main.service() must not expose a half-configured _service (e.g. before the reputation
+        # guard loads). It builds a LOCAL svc, configures it, and assigns _service as the LAST statement. Assert that any
+        # thread observing a non-None _service sees reputation already attached when the config asks for it.
+        import os, threading
+        from app import main
+        from app.store import Store as S
+        os.environ["PAYCANARY_REPUTATION"] = "1"
+        os.environ.setdefault("PAYCANARY_REPUTATION_KEY", "k" * 32)
+        try:
+            main._store = S(":memory:"); main._service = None; main._registry = None
+            observed = []
+            barrier = threading.Barrier(8)
+            def worker():
+                barrier.wait()
+                svc = main.service()
+                observed.append(getattr(svc, "reputation", None) is not None)   # must be fully configured when seen
+            ts = [threading.Thread(target=worker) for _ in range(8)]
+            for t in ts: t.start()
+            for t in ts: t.join()
+            self.assertTrue(all(observed), "every thread must see a fully-configured service (reputation attached)")
+        finally:
+            os.environ.pop("PAYCANARY_REPUTATION", None)
+            main._service = None
+
+    def test_malformed_signed_reversal_keeps_money_reserved(self):
+        # Codex confirm-pass hardening: a signed but MALFORMED reversal (inconsistent amounts) must not release the full
+        # reservation. Only a clean full reversal releases; malformed -> keep reserved (settled).
+        from app.providers.stripe.adapter import StripeProvider
+        import json as _j
+        p = StripeProvider(object(), webhook_secret="")
+        def ev(obj): return p.verify_webhook({}, _j.dumps({"type": "transfer.reversed", "data": {"object": obj}}).encode()).state
+        self.assertEqual(ev({"id": "tr_1", "amount": 10000, "amount_reversed": 10000}), "reversed")   # clean full -> release
+        self.assertEqual(ev({"id": "tr_1", "amount": 10000, "amount_reversed": 3000}), "settled")     # partial -> reserved
+        self.assertEqual(ev({"id": "tr_1", "amount_reversed": 5000}), "settled")                      # amount missing -> malformed -> reserved
+        self.assertEqual(ev({"id": "tr_1", "amount": -5, "amount_reversed": -5}), "settled")          # negative -> malformed -> reserved
+        self.assertEqual(ev({"id": "tr_1"}), "reversed")                                              # bare legitimate event -> full
+
     def test_explicit_stale_intent_id_is_rejected_not_accepted(self):
         # Codex 7-pass: supplying an OLD intent_id explicitly must still be subject to the 15-min freshness window,
         # exactly like the implicit latest_intent lookup. An expired intent cannot satisfy require_intent.
