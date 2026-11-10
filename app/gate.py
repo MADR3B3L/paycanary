@@ -123,6 +123,19 @@ class History:
         self.approved = set(approved_payees or [])      # operator-approved payees: externally anchored, unlike a self-asserted intent
         self.new_payee_floor = new_payee_floor
 
+    def observe_identity(self, payee, ts=None, recipient=None):
+        """Register that this payee/recipient is KNOWN, without feeding any amount into the baseline.
+        Used for history in a different currency: the identity carries across currencies (so a payee already
+        paid in USD is not treated as a brand-new, never-seen recipient when paid in EUR), but its amount
+        range does NOT (¥520,000 must never be compared against a dollar baseline). The payee becomes 'seen'
+        (not first_seen) but gains no amount trust: its ceiling/averages in the new currency are still empty,
+        so first-amount caution in the new currency still applies."""
+        self.payees.setdefault(payee, 0)                    # known, but count stays 0 until a same-currency payment is observed
+        if ts is not None:
+            self.first_ts.setdefault(payee, ts)
+        if recipient:
+            self.payee_recipients.setdefault(payee, set()).add(recipient)
+
     def observe(self, payee, amount, ts=None, hour=None, recipient=None):
         """Feed executed payments in time order."""
         amount = float(amount)

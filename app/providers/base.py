@@ -3,7 +3,9 @@ import re
 from dataclasses import dataclass, field
 
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,15}$")
-STATES = ("sent", "pending", "settled", "failed", "reversed")          # normalized across providers; the raw provider status is kept alongside, prefixed
+STATES = ("sent", "pending", "settled", "failed", "reversed", "in_doubt")   # normalized across providers; the raw provider status is kept alongside, prefixed
+# "in_doubt": the request left but its outcome is unknown (lost response, timeout, 5xx). The money MAY have moved, so it is
+# reserved against the cap (counted like pending) until reconciliation (a status poll or webhook) resolves it to settled or failed.
 
 
 class ProviderError(Exception):

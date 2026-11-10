@@ -25,11 +25,13 @@ class Idempotency(unittest.TestCase):
         self.assertEqual(len(pp.calls), 1); self.assertEqual(b["payment_id"], a["payment_id"]); self.assertTrue(b["duplicate"])
         self.assertEqual({k: b[k] for k in ("decision", "status", "paypal")}, {k: a[k] for k in ("decision", "status", "paypal")})
 
-    def test_a_replayed_5xx_stays_a_5xx_and_does_not_retry_paypal(self):
+    def test_a_replayed_unconfirmed_send_stays_in_doubt_and_does_not_retry_paypal(self):
+        # An unconfirmed outcome is the stored answer for this idempotency key: a replay must NOT re-call PayPal
+        # (which could double-send the money that may already have moved); it replays the in_doubt result.
         svc, pp, t = mkp(); pp.fail = True
-        a = svc.pay(req(), request_id="k1"); self.assertEqual(a["status"], "paypal_error")
+        a = svc.pay(req(), request_id="k1"); self.assertEqual(a["status"], "in_doubt")
         pp.fail = False; b = svc.pay(req(), request_id="k1")
-        self.assertEqual(b["status"], "paypal_error"); self.assertEqual(len(pp.calls), 1)               # the failure is the answer for this key
+        self.assertEqual(b["status"], "in_doubt"); self.assertEqual(len(pp.calls), 1)                   # the unconfirmed outcome is the answer for this key; no retry
 
     def test_a_frozen_verdict_is_replayed_too(self):
         svc, pp, t = mkp(); svc.set_agent("a", hard_cap=10)
@@ -184,8 +186,9 @@ class FailClosed(unittest.TestCase):
         self.assertEqual(svc.pay(req())["status"], "fail_closed"); self.assertEqual(pp.calls, [])
 
     def test_an_unconfirmed_paypal_call_is_never_reported_as_sent(self):
+        # A lost response is UNKNOWN, booked in_doubt (reserved against the cap) — and, above all, never reported as sent.
         svc, pp, t = mkp(); pp.fail = True
-        out = svc.pay(req()); self.assertEqual(out["status"], "paypal_error"); self.assertNotEqual(svc.store.payments("a")[0]["status"], "sent")
+        out = svc.pay(req()); self.assertEqual(out["status"], "in_doubt"); self.assertNotEqual(svc.store.payments("a")[0]["status"], "sent")
 
 
 if __name__ == "__main__":

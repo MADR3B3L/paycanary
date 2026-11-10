@@ -214,8 +214,10 @@ class Store:
                                                  "ORDER BY ts DESC LIMIT ?", (agent_id, limit)).fetchall()]
 
     def window_rows(self, agent_id, since_ts):
-        """Money that moved or is in flight since `since_ts`, whatever the original verdict (a released freeze still moved money)."""
-        return self.db.execute("SELECT ts, payee, amount, currency FROM payments WHERE agent_id=? AND ts>=? AND status IN ('pending','sent','settled') "
+        """Money that moved, is in flight, or MIGHT have moved since `since_ts`, whatever the original verdict (a released
+        freeze still moved money). 'in_doubt' (a send whose outcome was lost) is counted: the money may be gone, so it is
+        reserved against the cap until reconciliation resolves it to 'settled'/'sent' (stays counted) or 'failed' (drops out)."""
+        return self.db.execute("SELECT ts, payee, amount, currency FROM payments WHERE agent_id=? AND ts>=? AND status IN ('pending','sent','settled','in_doubt') "
                                "ORDER BY ts", (agent_id, since_ts)).fetchall()
 
     def attempt_rows(self, agent_id, since_ts):

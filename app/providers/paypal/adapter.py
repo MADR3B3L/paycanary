@@ -15,12 +15,18 @@ class PayPalProvider(Provider):
         self._mine(req)
         try:
             status, body = self.client.create_payout(req.recipient, req.amount, req.currency, note=req.memo, batch_id=req.idempotency_key, sender_item_id=req.payment_id)
-        except Exception as err:                                  # network / auth failure
-            return SendResult("paypal", False, "failed", error=type(err).__name__)
+        except Exception as err:
+            # The request may have left and been accepted before the response was lost (timeout, reset, auth/network failure):
+            # the outcome is UNKNOWN, not a confirmed non-send. Reserve it against the cap until reconciliation resolves it.
+            return SendResult("paypal", False, "in_doubt", error=type(err).__name__)
         hdr = body.get("batch_header", {}) if isinstance(body, dict) else {}
         if status in (200, 201) and hdr.get("payout_batch_id"):
             return SendResult("paypal", True, "sent", provider_id=hdr["payout_batch_id"], raw_status=hdr.get("batch_status"), http=status)
-        return SendResult("paypal", False, "failed", http=status, error=(body.get("name") if isinstance(body, dict) else None) or "http_%s" % status)
+        # A 5xx (or any non-4xx without a batch id) means the server may still have created the payout: outcome unknown -> in_doubt.
+        # A 4xx is a client-side rejection PayPal recorded without moving money: a confirmed non-send -> failed.
+        if isinstance(status, int) and 400 <= status < 500:
+            return SendResult("paypal", False, "failed", http=status, error=(body.get("name") if isinstance(body, dict) else None) or "http_%s" % status)
+        return SendResult("paypal", False, "in_doubt", http=status, error=(body.get("name") if isinstance(body, dict) else None) or "http_%s" % status)
 
     def status(self, provider_id):
         status, body = self.client.get_payout(provider_id)

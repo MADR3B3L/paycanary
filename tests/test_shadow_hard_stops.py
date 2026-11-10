@@ -379,6 +379,76 @@ class ShadowHardStops(unittest.TestCase):
         self.assertNotEqual(out["status"], "sent")
         self.assertEqual(pp.calls, [])                     # nothing reached the provider
 
+    def test_chain_corrupted_WHILE_running_refuses_the_next_send(self):
+        # Fault-injection finding 3a: healthy() caches its verdict, but corruption can happen mid-run. A stale cached
+        # True must NOT let a later payment move money on a now-broken chain. The money path re-verifies (fresh_check).
+        store = Store()
+        clk = [1_700_000_000.0]
+        pp = FakePayPal()
+        svc = Service(store, pp, clock=lambda: clk[0], default_require_intent=False,
+                      default_hard_cap=None, default_mode="enforce", audit_key="A" * 32, platform_cap=100000.0)
+        svc.pay(req(payee="seed1")); clk[0] += 86400       # seals + warms the healthy() cache (chain OK)
+        self.assertTrue(svc.audit.healthy())               # cache is now True
+        # corrupt a decision row on the SAME running service (live DB corruption), seal untouched
+        try:
+            store.db.execute("DROP TRIGGER IF EXISTS audit_no_update")
+        except Exception:
+            pass
+        row = store.db.execute("SELECT seq FROM audit WHERE event='decision' ORDER BY seq LIMIT 1").fetchone()
+        store.db.execute("UPDATE audit SET detail=? WHERE seq=?", ('{"tampered":true}', row["seq"]))
+        store.db.commit()
+        clk[0] += 86400
+        before = len(pp.calls)
+        out = svc.pay(req(payee="aftercorruption"))        # same long-lived service, cache still says True
+        self.assertIn(out["status"], ("frozen", "fail_closed"))   # fresh re-verify catches it: no send
+        self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(len(pp.calls), before)            # nothing reached the provider
+
+    def test_deleting_the_anchor_on_a_keyed_chain_refuses_sends(self):
+        # Fault-injection finding 3b: on an ALREADY-KEYED chain a missing anchor is tampering (tail-truncation evidence
+        # removed), not a first-time migration. verify() reports anchor_missing with keyed=True -> must fail closed.
+        import os, tempfile
+        store = Store()
+        clk = [1_700_000_000.0]
+        anchor = os.path.join(tempfile.mkdtemp(), "anchor.log")
+        svc = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                      default_mode="enforce", audit_key="A" * 32, audit_anchor=anchor, platform_cap=100000.0)
+        svc.pay(req(payee="seed1")); clk[0] += 86400       # seals the chain and writes anchor lines
+        self.assertTrue(os.path.exists(anchor))
+        self.assertTrue(svc.audit.verify()["ok"])
+        # delete the anchor of an already-keyed chain (tamper, not migration)
+        os.remove(anchor)
+        v = svc.audit.verify()
+        self.assertTrue(v["keyed"]); self.assertEqual(v["reason"], "anchor_missing")
+        # reopen with the correct key but no anchor present; the next payment must fail closed
+        clk[0] += 86400
+        pp = FakePayPal()
+        reopened = Service(store, pp, clock=lambda: clk[0], default_require_intent=False, default_hard_cap=None,
+                           default_mode="enforce", audit_key="A" * 32, audit_anchor=anchor, platform_cap=100000.0)
+        self.assertFalse(reopened.audit.healthy())         # keyed chain + anchor gone = unhealthy
+        out = reopened.pay(req(payee="afteranchorloss"))
+        self.assertIn(out["status"], ("frozen", "fail_closed"))
+        self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(pp.calls, [])
+
+    def test_currency_change_keeps_recipient_identity_not_a_brand_new_payee(self):
+        # Fault-injection finding 2: a payee paid in USD, then paid in EUR, must NOT be treated as a brand-new recipient.
+        # Identity carries across currencies (not first_seen); the amount baseline stays currency-separate.
+        store = Store()
+        clk = [1_700_000_000.0]
+        svc = Service(store, FakePayPal(), clock=lambda: clk[0], default_require_intent=False,
+                      default_hard_cap=None, default_mode="enforce")
+        pr = lambda cur, amt: svc.pay({"agent_id": "a", "payee": "Acme", "recipient_email": "acme@x.com",
+                                       "amount": amt, "currency": cur, "memo": "m"})
+        for _ in range(12):
+            clk[0] += 20 * 3600; pr("USD", "60.00")        # build USD history for Acme
+        clk[0] += 120
+        # now a EUR payment to the SAME payee: history is rebuilt for the EUR decision
+        hist = svc._history("a", clk[0], hint=("acme@x.com", "Acme", "EUR"))
+        self.assertIn("Acme", hist.payees)                 # identity known across currencies -> NOT first_seen
+        self.assertEqual(hist.payees.get("Acme"), 0)       # but no EUR amount trust yet (count 0): first-EUR-amount caution still applies
+        self.assertNotIn("Acme", [p for p, amts in hist.by_payee.items()])   # no EUR amount baseline pooled from USD
+
     def test_same_key_different_payload_across_workers_is_a_conflict(self):
         # two workers, same key but DIFFERENT payload: the loser must get a conflict, not a second send
         store = Store()

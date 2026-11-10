@@ -127,10 +127,28 @@ class T(unittest.TestCase):
         self.assertEqual(svc.deny(f2["payment_id"])["status"], "denied"); self.assertEqual(len(pp.calls), n + 1)
         self.assertNotIn("NewVendor", [r["payee"] for r in svc.store.baseline_rows("bill-bot")])   # a released freeze does not teach the baseline
 
-    def test_paypal_failure_fails_closed(self):
+    def test_paypal_network_failure_is_in_doubt_never_sent(self):
+        # A raised create_payout (lost response / network failure) is an UNKNOWN outcome, not a confirmed non-send:
+        # the money may have moved. It must never be reported as sent, and must be reserved against the cap.
         svc, pp, t = mk(); pp.fail = True
-        out = pay(svc); self.assertEqual(out["status"], "paypal_error")
-        self.assertEqual(svc.store.payment(out["payment_id"])["status"], "paypal_error")
+        out = pay(svc); self.assertEqual(out["status"], "in_doubt")
+        self.assertNotEqual(out["status"], "sent")
+        self.assertEqual(svc.store.payment(out["payment_id"])["status"], "in_doubt")
+
+    def test_in_doubt_payment_is_reserved_against_the_cap(self):
+        # Finding 1: an unconfirmed payout (lost response) must count against the rolling cap until reconciled, or the
+        # next payment can breach it. The fix is that window_rows (the cap accounting) counts 'in_doubt', unlike a
+        # confirmed 'failed'. Prove it: a send that raises is booked in_doubt AND shows up in the cap window.
+        svc, pp, t = mk(); seed_history(svc, t); t[0] += 120
+        pp.fail = True
+        d1 = pay(svc, "AWS", "60.00"); self.assertEqual(d1["status"], "in_doubt")       # in-pattern amount: allowed, attempts send, response lost
+        pp.fail = False
+        reserved = sum(r["amount"] for r in svc.store.window_rows("bill-bot", t[0] - 3600))
+        self.assertGreaterEqual(reserved, 60.0)                                         # the in_doubt $60 is reserved in the cap window
+        # contrast: a CONFIRMED failure (4xx) does NOT reserve. Simulate by forcing the stored status to 'failed'.
+        svc.store.update_payment(d1["payment_id"], status="paypal_error")
+        after = sum(r["amount"] for r in svc.store.window_rows("bill-bot", t[0] - 3600))
+        self.assertLess(after, reserved)                                                # a confirmed non-send drops out of the window
 
     def test_unverified_webhook_never_changes_state_by_default(self):
         svc, pp, t = mk(); out = pay(svc, "AWS", "50.00")

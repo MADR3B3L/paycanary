@@ -272,6 +272,7 @@ class Service:
             h.seed_external([e for e in ext if e[2] < own_first])            # real history that PREDATES what we have observed; ours takes over after
         for r in self.store.baseline_rows(agent_id):
             if (r["currency"] or "USD") != cur:
+                h.observe_identity(r["payee"], r["ts"], r["recipient"])            # identity carries across currencies; amount does NOT (a payee seen in USD is not a brand-new recipient when paid in EUR)
                 continue                                                          # one baseline per currency: amounts are never pooled across currencies
             h.observe(r["payee"], r["amount"], r["ts"], r["hour"], r["recipient"])
         for r in self.store.attempt_rows(agent_id, now - G.VELOCITY_WINDOW_S):
@@ -423,7 +424,8 @@ class Service:
                 return "skipped", "claimed elsewhere or denied"
         # record the release BEFORE sending: no money moves without a durable audit record.
         seq = self.audit.append("auto_released_after_cooldown", "gate", agent_id=agent, payment_id=pid, mode=cur.get("mode"),
-                                detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked)})
+                                detail={"amount": cur["amount"], "payee": cur["payee"], "evidence_checked": sorted(checked)},
+                                fresh_check=True)       # money path: re-verify the chain live before releasing funds
         if seq is None:
             self.store.update_payment(pid, status="frozen", decided_by=None)
             return self._hold_for_human(p, "audit log unavailable: cooldown release not recorded, held for a human")
@@ -576,7 +578,8 @@ class Service:
                     raise
                 seq = self.audit.append("decision", "gate", agent_id=agent, payment_id=pid, mode=mode,
                                         detail={"verdict": tier, "enforced": enforced, "score_kind": kind, "reason": reason[:300], "payee": r["payee"],
-                                                "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]})
+                                                "amount": amount, "currency": r["currency"], "risk": row["risk"], "policy_hash": pol["hash"]},
+                                        fresh_check=True)       # money path: re-verify the chain live so mid-run corruption/anchor deletion fails closed, not masked by a cached verdict
                 if seq is None and not held:
                     # the decision could not be written to the audit log: do not let money move without a record. fail closed.
                     reason = "audit log unavailable: fail-closed (nothing sent until the decision can be recorded)"
@@ -687,6 +690,17 @@ class Service:
             res = SendResult(prov, False, "failed", error=type(err).__name__)
         except Exception as err:                                                # an adapter must never raise, but if it does: fail closed
             res = SendResult(prov, False, "failed", error=type(err).__name__)
+        # An UNKNOWN outcome (lost response / 5xx) is NOT a confirmed non-send: the money may have moved. Book it as 'in_doubt'
+        # so it is reserved against the rolling cap (window_rows counts it) until a status poll or webhook reconciles it.
+        if not res.ok and res.state == "in_doubt":
+            fields = {"status": "in_doubt"}
+            if prov == "paypal":
+                fields["paypal_status"] = str(res.http) if res.http is not None else res.error
+            self.store.update_payment(pid, **fields)
+            self.audit.append("provider_result", "gate", payment_id=pid,
+                              detail={"provider": prov, "status": "in_doubt", "error": res.error, "http": res.http,
+                                      "note": "outcome unknown; reserved against cap until reconciled"})
+            return {"status": "in_doubt", "provider": prov}
         err_status = "paypal_error" if prov == "paypal" else "provider_error"
         if res.ok and res.provider_id:
             ref = "%s:%s" % (prov, res.provider_id)
@@ -734,7 +748,8 @@ class Service:
             if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self.clock()):
                 return {"ok": False, "reason": "payment is not frozen"}
         seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
-                                detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]})
+                                detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]},
+                                fresh_check=True)       # money path: re-verify the chain live before releasing funds
         if seq is None:
             # no durable record of the release: do not send. put the payment back on the operator's queue.
             self.store.update_payment(payment_id, status="frozen", decided_by=None)

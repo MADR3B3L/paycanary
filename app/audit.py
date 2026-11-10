@@ -54,20 +54,28 @@ class AuditLog:
             self._sealed = self.store.db.execute("SELECT 1 FROM audit WHERE event=? LIMIT 1", (SEAL_EVENT,)).fetchone() is not None
         return self._sealed
 
-    def healthy(self):
-        """Is the existing chain valid RIGHT NOW? Verified once and cached: corruption is a persistent DB state, and a
-        row this process writes keeps the chain valid, so re-running the O(n) verify on every append would be wasteful.
-        A money-moving caller must refuse to send when this is False (a successful INSERT is not proof of a valid log:
-        the chain could already be broken by DB corruption even under the correct key). An empty or unkeyed legacy log
-        with no rows is healthy; once there are rows we verify them."""
-        if self._chain_ok is None:
+    def healthy(self, fresh=False):
+        """Is the existing chain valid RIGHT NOW? Verified and cached: a row THIS process writes keeps the chain valid,
+        so re-running the O(n) verify on every bookkeeping append would be wasteful. But corruption or anchor removal can
+        happen WHILE the service runs (a live edit to the DB, a deleted anchor), and a stale cached True would then let a
+        payment move on a log that is no longer intact. So a money-authorizing caller passes fresh=True to force a real
+        re-verify now; cached verdict is only ever trusted for non-money bookkeeping writes.
+        A money-moving caller must refuse to send when this is False (a successful INSERT is not proof of a valid log).
+        An empty or unkeyed legacy log with no rows is healthy; once there are rows we verify them."""
+        if fresh or self._chain_ok is None:
             try:
                 v = self.verify()
                 # Fail closed on genuine chain corruption only. An anchor that is merely missing/unreadable on a chain
-                # that is not yet keyed is NOT corruption: the anchor is created on the first keyed write (migration).
+                # that is NOT YET KEYED is not corruption: the anchor is created on the first keyed write (migration).
+                # But on an already-keyed (sealed) chain, a missing/unreadable anchor IS tampering -> fail closed.
                 CORRUPT = {"chain_broken", "unreadable_row", "seal_mismatch", "truncated_or_rewritten",
                            "anchor_tampered", "anchor_mismatch", "key_unavailable"}
-                self._chain_ok = bool(v.get("ok")) or (v.get("reason") not in CORRUPT)
+                reason = v.get("reason")
+                if v.get("keyed") and reason in ("anchor_missing", "anchor_unreadable"):
+                    ok = False                                          # keyed chain with its anchor gone/unreadable: tamper, not migration
+                else:
+                    ok = bool(v.get("ok")) or (reason not in CORRUPT)
+                self._chain_ok = ok
             except Exception:
                 self._chain_ok = False      # cannot even verify -> treat as unhealthy, fail closed
         return self._chain_ok
@@ -109,9 +117,11 @@ class AuditLog:
         self._anchor(cur.lastrowid, h)
         return cur.lastrowid
 
-    def append(self, event, actor, agent_id=None, payment_id=None, mode=None, detail=None, ts=None):
+    def append(self, event, actor, agent_id=None, payment_id=None, mode=None, detail=None, ts=None, fresh_check=False):
         """Best-effort for callers that must not fail (returns the new seq or None); the log itself never raises into a payment.
-        A chain that has been sealed with a key can only be extended by a process that holds that key (otherwise it returns None)."""
+        A chain that has been sealed with a key can only be extended by a process that holds that key (otherwise it returns None).
+        fresh_check=True forces a live re-verify of the existing chain before writing: the money path uses it so corruption or
+        an anchor deleted WHILE the service runs is caught, not masked by a cached verdict."""
         now = float(ts if ts is not None else self.clock())
         rec = {"ts": now, "event": event, "actor": actor, "agent_id": agent_id, "payment_id": payment_id, "mode": mode, "detail": detail or {}}
         try:
@@ -123,7 +133,7 @@ class AuditLog:
                     return None                                         # refuse to write unkeyed rows into a keyed chain
                 if sealed and self.key and not self._key_matches_chain():
                     return None                                         # wrong key for this sealed chain: the row would insert but verify() would fail, so fail closed
-                if not self.healthy():
+                if not self.healthy(fresh=fresh_check):
                     return None                                         # the existing chain is already invalid (DB corruption / tamper), even under the right key: a new row cannot repair it, so fail closed
                 if self.key and not sealed:                             # first keyed write: pin the legacy head, then continue under HMAC
                     n = self.store.db.execute("SELECT count(*) FROM audit").fetchone()[0]
