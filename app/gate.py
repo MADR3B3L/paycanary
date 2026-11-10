@@ -280,7 +280,7 @@ def fanout_trips(txn, hist):
 def _classify_base(txn, hist):
     payee, amount = txn.get("payee"), txn.get("amount")
     ts, hour = txn.get("ts", 0.0), txn.get("hour")
-    if not isinstance(payee, str) or isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount <= 0:
+    if not isinstance(payee, str) or isinstance(amount, bool) or not isinstance(amount, (int, float)) or not math.isfinite(amount) or amount <= 0:
         return "freeze", "novelty", "unparseable/invalid txn (fail-toward-freezing)"
     new_payee = payee not in hist.payees
     m, sd = hist.mean_sd()

@@ -488,6 +488,16 @@ class ShadowHardStops(unittest.TestCase):
         self.assertIn(out["status"], ("frozen", "fail_closed")); self.assertNotEqual(out["status"], "sent")
         self.assertEqual(len(pp.calls), before)
 
+    def test_gate_freezes_a_non_finite_amount_fail_closed(self):
+        # Region A hardening: the gate is the fail-closed in-path backstop and must not rely on upstream validation to
+        # never pass NaN/Inf. NaN <= 0 is False, so without a finiteness check NaN falls through every > / >= freeze test
+        # to 'allow'. The gate itself must freeze a non-finite amount.
+        from app import gate as _G
+        hist = _G.History(hard_cap=None)                 # a real, empty history (no hard cap) so nothing but the gate's own guards can freeze
+        for bad in (float("nan"), float("inf"), float("-inf")):
+            tier, _kind, _reason = _G.classify({"payee": "V", "amount": bad, "ts": 0.0, "hour": 0}, hist)
+            self.assertEqual(tier, "freeze", "non-finite amount %r must freeze" % bad)
+
     def test_reversed_is_terminal_a_replayed_settle_webhook_cannot_un_reverse(self):
         # Boundary finding (Dot's method, state-machine promise): a full reversal drops a payment from the cap. Webhooks
         # are at-least-once and can reorder, so a replayed/out-of-order settle event must NOT flip reversed -> settled
