@@ -90,6 +90,18 @@ class ConfigIsolation(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_registry({"PAYCANARY_PAYPAL_CLIENT_ID": "a", "PAYCANARY_PAYPAL_CLIENT_SECRET": "b", "PAYCANARY_PAYPAL_ENV": "live"}, names=("paypal",))   # PayPal client refuses non-sandbox
 
+    def test_normal_server_registers_stripe_when_its_key_is_set(self):
+        # Finding 4: the normal (non-demo) server builds names=("paypal","stripe"), so a Stripe-configured agent is
+        # NOT answered with "unknown provider". Stripe is registered only when its own test key is present; a
+        # PayPal-only deployment is unchanged (Stripe simply absent).
+        from app.providers.factory import build_registry
+        paypal_env = {"PAYCANARY_PAYPAL_CLIENT_ID": "a", "PAYCANARY_PAYPAL_CLIENT_SECRET": "b"}
+        self.assertEqual(build_registry(paypal_env, names=("paypal", "stripe")).names(), ["paypal"])   # no Stripe key -> PayPal only, unchanged
+        both = {**paypal_env, "PAYCANARY_STRIPE_SECRET_KEY": "sk_test_" + "x" * 24}
+        self.assertEqual(sorted(build_registry(both, names=("paypal", "stripe")).names()), ["paypal", "stripe"])   # Stripe test key -> registered
+        with self.assertRaises(ValueError):
+            build_registry({**paypal_env, "PAYCANARY_STRIPE_SECRET_KEY": "sk_live_" + "x" * 24}, names=("paypal", "stripe"))   # a live Stripe key is never silently skipped
+
 
 if __name__ == "__main__":
     unittest.main()

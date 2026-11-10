@@ -55,7 +55,10 @@ def registry():
         if demo_offline():
             _registry = build_registry(os.environ, names=("mock", "demo_rails"))
         else:
-            _registry = build_registry(os.environ, names=("paypal",))
+            # Register every configured rail from its own slot: PayPal always, Stripe (test mode) when its key is set.
+            # build_registry leaves out a provider whose slot is not configured, so a PayPal-only deployment is unchanged;
+            # a live (non-test) Stripe key still raises in the Stripe slot rather than being silently skipped.
+            _registry = build_registry(os.environ, names=("paypal", "stripe"))
             if "paypal" not in _registry:
                 raise ValueError("PayPal sandbox credentials are required (PAYCANARY_PAYPAL_CLIENT_ID / PAYCANARY_PAYPAL_CLIENT_SECRET)")
     return _registry
