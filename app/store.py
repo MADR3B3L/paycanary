@@ -252,6 +252,24 @@ class Store:
             self.db.commit()
         return n == 1
 
+    def claim_webhook_transition(self, payment_id, new, extra=None):
+        """Atomically advance a payment to `new` ONLY from a legal state, in ONE write whose WHERE clause IS the legality check.
+        Webhooks are at-least-once and can REORDER, so two events for the same payment can race: a read-then-write guard in the
+        caller would let a replayed 'settled' overwrite a 'reversed' that landed first (re-counting returned money). The transition
+        is legal only when the current status is neither `new` (no-op) nor 'reversed' (terminal: the money came back). Returns
+        (applied, from_status): applied is True for exactly the one caller that moved it; a loser changes nothing."""
+        with self.lock:
+            row = self.db.execute("SELECT status FROM payments WHERE payment_id=?", (payment_id,)).fetchone()
+            if row is None:
+                return False, None
+            cols = {"status": new, **(extra or {})}
+            sets = ", ".join("%s=?" % k for k in cols)
+            n = self.db.execute(
+                f"UPDATE payments SET {sets} WHERE payment_id=? AND status!=? AND status!='reversed'",
+                (*cols.values(), payment_id, new)).rowcount
+            self.db.commit()
+            return n == 1, row["status"]
+
     def ev_get(self, domain, now):
         r = self.db.execute("SELECT evidence_json, fetched_ts, ttl FROM enrichment_cache WHERE domain=?", (domain,)).fetchone()
         return json.loads(r["evidence_json"]) if r and now - r["fetched_ts"] < r["ttl"] else None

@@ -527,6 +527,43 @@ class ShadowHardStops(unittest.TestCase):
         self.assertEqual(store.payment(pid)["status"], "reversed")                    # still terminal
         self.assertEqual(sum(r["amount"] for r in store.window_rows("a1", 0)), 0.0)   # returned money NOT re-counted
 
+    def test_concurrent_reversed_and_settle_webhooks_never_leave_a_payment_settled(self):
+        # Boundary finding (Dot's method, NEARBY VARIANT of the replay test above, concurrency angle): the same two events
+        # can arrive CONCURRENTLY, not just reordered. A read-then-write guard (read status -> decide legal -> write) would
+        # let both a 'reversed' and a 'settled' thread read 'sent', both judge the move legal, and both write -- so a settle
+        # could land AFTER a reverse and re-count returned money. The transition must be a compare-and-swap whose WHERE clause
+        # is the legality check. Promise: once reversed, a racing settle can never un-reverse the payment or revive its cap spend.
+        import json as _json, threading
+        from app.providers.registry import Registry
+        from app.providers.stripe.adapter import StripeProvider
+        for trial in range(40):                                                          # many trials: the race window is tiny
+            store = Store()
+            reg = Registry(); reg.register(StripeProvider(object(), webhook_secret=""))
+            svc = Service(store, None, clock=lambda: 1_700_000_000.0, default_require_intent=False, default_hard_cap=None,
+                          default_mode="enforce", providers=reg, default_provider="stripe", dev_webhooks=True, platform_cap=100000.0)
+            pid = "pay-race%02d" % trial
+            store.insert_payment({"payment_id": pid, "agent_id": "a1", "ts": 1_700_000_000.0, "payee": "V", "recipient": "x@y.com",
+                "amount": 500.0, "currency": "USD", "memo": "m", "hour": 0, "intent_id": None, "verdict": "allow",
+                "score_kind": "ok", "reason": "", "status": "sent", "provider": "stripe", "paypal_batch_id": None,
+                "paypal_status": None, "decided_by": None, "event_json": "{}", "narration": None, "risk": 0.1, "llm_flag": None,
+                "mode": "enforce", "enforced": 1, "policy_hash": "h", "release_at": None})
+            store.update_payment(pid, provider_ref="stripe:tr_race%02d" % trial)
+            def wh(obj):
+                obj = dict(obj); t = obj.pop("_type")
+                svc.handle_webhook({}, _json.dumps({"type": t, "data": {"object": obj}}).encode(), provider="stripe")
+            rev = {"_type": "transfer.reversed", "id": "tr_race%02d" % trial, "amount": 50000, "amount_reversed": 50000}
+            set_ = {"_type": "transfer.updated", "id": "tr_race%02d" % trial}
+            start = threading.Barrier(2)
+            def run(ev):
+                start.wait()                                                             # release both threads together
+                wh(ev)
+            ths = [threading.Thread(target=run, args=(rev,)), threading.Thread(target=run, args=(set_,))]
+            [x.start() for x in ths]; [x.join() for x in ths]
+            # whichever order the two threads ran, 'reversed' is terminal: a settle can never be the final state,
+            # and returned money is never counted against the cap.
+            self.assertEqual(store.payment(pid)["status"], "reversed", "trial %d left it settled" % trial)
+            self.assertEqual(sum(r["amount"] for r in store.window_rows("a1", 0)), 0.0, "trial %d re-counted returned money" % trial)
+
     def test_an_adapter_that_raises_mid_send_is_in_doubt_not_failed(self):
         # Defense-in-depth (security fault-injection note): if a provider adapter raises an UNEXPECTED exception mid-send
         # (not a structural ProviderError), _send must treat it as UNKNOWN -> in_doubt (reserved against the cap), never

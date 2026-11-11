@@ -44,9 +44,19 @@ class T(unittest.TestCase):
         for bad in ({}, {"agent_id": "a", "payee": "p", "recipient_email": "nope", "amount": "5"},
                     {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "-5"},
                     {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "1.234"},
+                    # a sub-cent amount must be REJECTED, never silently rounded: a fraction of a cent below a cap
+                    # is the classic 'slip under the ceiling' vector, and scientific-notation sub-cent is the same trick.
+                    {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "20.001"},
+                    {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "20.000000001"},
+                    {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "1e-3"},
+                    {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "0x10"},
+                    {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "Inf"},
                     {"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "NaN"},
                     {"agent_id": "a", "payee": "p\x00", "recipient_email": "a@b.co", "amount": "5"}):
             with self.assertRaises(ValidationError): validate_request(bad)
+        # and a well-formed 2-decimal amount with surrounding whitespace is still accepted (not over-zealously rejected)
+        ok = validate_request({"agent_id": "a", "payee": "p", "recipient_email": "a@b.co", "amount": "  20.00  ", "currency": "USD", "memo": ""})
+        self.assertEqual(str(ok["amount"]), "20.00")
 
     def test_first_payee_review_then_allow_and_paypal_called(self):
         svc, pp, t = mk()

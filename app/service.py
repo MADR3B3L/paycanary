@@ -806,14 +806,13 @@ class Service:
                 new = {"settled": "settled", "reversed": "reversed"}.get(ev.state, p["status"])
                 # Webhooks are at-least-once and can REORDER. 'reversed' is terminal: the money came back, so a replayed
                 # or out-of-order settle event must NOT flip reversed -> settled (that would re-count returned money
-                # against the cap and falsely record the payout as settled). Only advance along legal transitions.
-                cur = p["status"]
-                legal = cur != new and not (cur == "reversed")         # reversed is terminal; a no-op status is skipped
-                if legal:
-                    fields = {"status": new}
-                    if provider == "paypal":
-                        fields["paypal_status"] = str(ev.raw_status)[:40]
-                    self.store.update_payment(p["payment_id"], **fields)
+                # against the cap and falsely record the payout as settled). The legality check IS the UPDATE's WHERE
+                # clause (compare-and-swap), so two webhooks racing on the same payment can never both apply: a read-then-
+                # write guard here would let a replayed settle that read an old 'sent' snapshot overwrite a reversed that
+                # already landed. claim_webhook_transition returns (applied, from_status) atomically.
+                extra = {"paypal_status": str(ev.raw_status)[:40]} if provider == "paypal" else None
+                applied, cur = self.store.claim_webhook_transition(p["payment_id"], new, extra)
+                if applied:
                     self.audit.append("webhook_state_change", provider if ev.verified else "unverified-sender",
                                       payment_id=p["payment_id"], detail={"from": cur, "to": new, "event_type": ev.event_type})
                 elif cur == "reversed" and new == "settled":
