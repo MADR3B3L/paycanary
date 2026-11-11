@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS llm_usage (day TEXT PRIMARY KEY, calls INTEGER NOT NU
 CREATE INDEX IF NOT EXISTS payments_agent_ts ON payments(agent_id, ts);
 CREATE TABLE IF NOT EXISTS webhook_events (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, event_type TEXT,
   resource_id TEXT, verified INTEGER, raw TEXT);
+CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v REAL NOT NULL);
 """
 
 
@@ -50,6 +51,22 @@ class Store:
             if c not in ecols:
                 self.db.execute(f"ALTER TABLE external_history ADD COLUMN {c} TEXT")
         self.db.commit()
+
+    def clock_high_water(self, now):
+        """Monotonic decision clock: return max(now, highest decision-time ever seen) and persist the new high-water mark,
+        atomically (one locked read+write; safe even across --workers against the shared file). The cap/TTL math must never
+        move BACKWARD when the wall clock does (NTP step-back, VM pause/migrate/snapshot-restore, manual `date`): a backward
+        step would blank every rolling window and revive expired intents. Returns (effective_now, regressed_by) where
+        regressed_by = how far the wall clock sits BELOW the high-water mark right now (0.0 when it is at/ahead = normal).
+        A positive regressed_by is the signal the caller logs as a `clock_regression` audit event — fail-safe AND visible."""
+        with self.lock:
+            row = self.db.execute("SELECT v FROM meta WHERE k='clock_hw'").fetchone()
+            hw = row["v"] if row else None
+            eff = now if hw is None else max(now, hw)
+            if hw is None or eff > hw:
+                self.db.execute("INSERT INTO meta VALUES ('clock_hw', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (eff,))
+                self.db.commit()
+            return eff, (0.0 if hw is None else max(0.0, hw - now))
 
     def set_agent(self, agent_id, config):
         with self.lock:
@@ -86,11 +103,14 @@ class Store:
 
     def reset_demo_data(self):
         """DEMO ONLY (called by a forced re-seed): clears payments, intents, idempotency keys, cached enrichment and webhook events so the seed starts clean.
-        The audit log is append-only and is never touched; agents, profiles and policy snapshots are kept. -> row counts removed."""
+        The audit log is append-only and is never touched; agents, profiles and policy snapshots are kept. -> row counts removed.
+        Also clears the monotonic clock high-water mark: a re-seed replays a fresh backdated timeline from scratch, so a stale
+        high-water mark from a prior run must not clamp the new seed's (lower) simulated clock forward and distort its windows."""
         out = {}
         with self.lock:
             for t in ("payments", "intents", "idempotency", "enrichment_cache", "webhook_events"):
                 out[t] = self.db.execute("DELETE FROM %s" % t).rowcount
+            self.db.execute("DELETE FROM meta WHERE k='clock_hw'")
             self.db.commit()
         return out
 

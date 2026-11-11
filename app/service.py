@@ -57,6 +57,20 @@ class Service:
         self.llm = None                                  # optional app.llm.LLM: narration/flags only, never decides
         self.on_decided = None                           # optional callback(payment_id), fired AFTER the decision is final
 
+    def _decide_now(self):
+        """The clock the cap/TTL/window math uses: monotonic, never moving backward even when the wall clock does.
+        A backward wall-clock step (NTP step-back, VM pause/migrate/snapshot-restore, manual `date`) would otherwise blank
+        every rolling cap window and the replay/burst guards, and revive an expired intent, because the window sums clamp
+        `t <= now` and freshness compares `ts < now - TTL`. We clamp `now` up to the high-water mark so a rewind cannot
+        un-count spend, and we emit a visible `clock_regression` audit event so the operator sees the clock moved (fail-safe
+        AND visible). The HUMAN-READABLE ts on audit rows still uses the raw wall clock; only decision/cutoff math is clamped."""
+        eff, regressed = self.store.clock_high_water(self.clock())
+        if regressed > 0.0:
+            self.audit.append("clock_regression", "system",
+                              detail={"wall_clock": self.clock(), "effective_now": eff, "regressed_seconds": round(regressed, 3),
+                                      "why": "wall clock moved backward; cap/TTL math held at the high-water mark so a rewind cannot blank the rolling windows or revive an expired intent"})
+        return eff
+
     # ---- agents + intents -------------------------------------------------------------------------------------
     def set_agent(self, agent_id, hard_cap=None, active_hours=None, require_intent=None, approved_payees=None, new_payee_floor=None, mode=None, actor="operator", org_id=None, probation_abs=None, probation_mult=None, cooldown_s=None, fanout_k=None, probation_hold=None):
         """OPERATOR-ONLY (the HTTP layer enforces it): writes the agent's guard configuration."""
@@ -367,7 +381,7 @@ class Service:
         nothing adverse (unknown is NOT clean: a gather that could not run keeps the hold for a human), and (2) the payment, re-classified NOW with the
         original plan, is no longer frozen by any rule (cap, cumulative windows, network reputation, evidence...). Otherwise it stays held for the
         operator. An operator denial always wins (the claim is an atomic frozen->pending flip). Safe to call repeatedly."""
-        now, out = self.clock(), []
+        now, out = self._decide_now(), []           # monotonic: the re-classify at auto-release uses the same backward-clock-safe clock
         for p in self.store.due_cooldowns(now):
             try:
                 out.append((p["payment_id"],) + self._try_auto_release(p, now))
@@ -497,7 +511,7 @@ class Service:
         agent, fp = r["agent_id"], self._fingerprint(r)
         try:
             with self._decide_lock:
-                now = self.clock()
+                now = self._decide_now()                 # monotonic: a backward wall-clock step can't blank the cap windows or revive an expired intent
                 if rid:
                     prev = self.store.idem_get(agent, rid)
                     if prev:
@@ -757,7 +771,9 @@ class Service:
             # atomic claim: only one of release / deny / sweep wins a frozen payment. the money moves NOW, so flip the
             # status to 'pending' AND book its spend at release time in ONE write — a concurrent payment can never see
             # this release in flight while it still counts in the original (held) hour. original ts kept in the audit log.
-            if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self.clock()):
+            # the booked spend ts uses the monotonic decision clock, so a backward wall-clock step can't place this
+            # release below the window other decisions read (which would un-count it from the rolling cap).
+            if not self.store.claim_release(payment_id, "human:" + clean_text(by, "by", limit=40), ts=self._decide_now()):
                 return {"ok": False, "reason": "payment is not frozen"}
         seq = self.audit.append("released", clean_text(by, "by", limit=40), agent_id=p["agent_id"], payment_id=payment_id, mode=p.get("mode"),
                                 detail={"amount": p["amount"], "payee": p["payee"], "overridden_reason": (p.get("reason") or "")[:300]},

@@ -527,6 +527,51 @@ class ShadowHardStops(unittest.TestCase):
         self.assertEqual(store.payment(pid)["status"], "reversed")                    # still terminal
         self.assertEqual(sum(r["amount"] for r in store.window_rows("a1", 0)), 0.0)   # returned money NOT re-counted
 
+    def test_a_backward_wall_clock_step_cannot_blank_the_rolling_cap_window(self):
+        # Boundary finding (Dot's method, time/clock angle; independently confirmed by the Security division's read-only
+        # pass). Promise: "a drain can't escape the rolling cap by exploiting time." The rolling-window sums clamp
+        # `now - secs <= t <= now`; a BACKWARD wall-clock step (NTP step-back, VM pause/migrate/snapshot-restore, manual
+        # `date`) makes every prior spend's t > now, so it drops out of the window and the cap re-opens. Not agent-
+        # reachable (ts is server-set) but reachable through ordinary ops events. The decision clock is monotonic: it
+        # never moves below its high-water mark, and a regression is logged as a visible clock_regression audit event.
+        clk = [1_700_000_000.0]
+        pp = FakePayPal()
+        svc = Service(Store(), pp, clock=lambda: clk[0], default_require_intent=False, default_hard_cap=1000.0, default_mode="enforce")
+        svc.set_agent("a1", hard_cap=1000.0)
+        # drive legitimate cumulative spend up near the 2x hourly cap (2000) via approved payee so only the cap gates
+        svc.set_agent("a1", hard_cap=1000.0, approved_payees=["Vend"])
+        for amt in ("600.00", "610.00", "590.00"):                           # distinct amounts so the replay guard never fires;
+            clk[0] += 120                                                     # >60s apart so the burst/drain guard isn't the active constraint
+            out = svc.pay(req(payee="Vend", amount=amt, agent_id="a1"))
+            self.assertIn(out["decision"], ("allow", "review"), out)          # 1800 cumulative in the hour, under the 2x=2000 hourly cap
+        # one more 600 would make 2400 > 2000 in the hour -> cumulative structuring freeze
+        clk[0] += 120
+        self.assertEqual(svc.pay(req(payee="Vend", amount="600.00", agent_id="a1"))["decision"], "freeze")
+        # STEP THE CLOCK BACKWARD far past all recorded spend, then retry the drain
+        clk[0] -= 100000.0
+        out = svc.pay(req(payee="Vend", amount="620.00", agent_id="a1"))     # distinct amount: isolate the cap, not the replay guard
+        self.assertEqual(out["decision"], "freeze", "a backward clock step re-opened the rolling cap: %r" % out)
+        # and the backward step is VISIBLE, not silent
+        self.assertTrue(svc.audit.rows(0, 500, "clock_regression"), "no clock_regression audit event was emitted on the backward step")
+
+    def test_a_backward_wall_clock_step_cannot_revive_an_expired_intent(self):
+        # Same root cause, different consumer (Security division finding T2): intent freshness is `ts < now - TTL`, so the
+        # cutoff slides backward with the clock and an expired plan becomes 'fresh' again. The monotonic decision clock
+        # keeps an expired intent expired after a rewind.
+        clk = [1_700_000_000.0]
+        pp = FakePayPal()
+        svc = Service(Store(), pp, clock=lambda: clk[0], default_require_intent=True, default_hard_cap=None, default_mode="enforce")
+        svc.set_agent("a1", require_intent=True)
+        svc.register_intent("a1", ["pay1"], "plan")
+        iid = svc.store.latest_intent("a1", clk[0] - 1)["intent_id"]
+        clk[0] += 2000                                                       # intent (TTL 900s) is now long expired
+        out = svc.pay(req(agent_id="a1", intent_id=iid))
+        self.assertEqual(out["status"], "rejected", out)                     # expired intent rejected
+        self.assertIn("expired", out["reason"])
+        clk[0] -= 1950                                                       # rewind so wall-clock `ts < now-TTL` would be False again
+        out = svc.pay(req(agent_id="a1", intent_id=iid))
+        self.assertEqual(out["status"], "rejected", "a backward clock step revived an expired intent: %r" % out)
+
     def test_concurrent_reversed_and_settle_webhooks_never_leave_a_payment_settled(self):
         # Boundary finding (Dot's method, NEARBY VARIANT of the replay test above, concurrency angle): the same two events
         # can arrive CONCURRENTLY, not just reordered. A read-then-write guard (read status -> decide legal -> write) would
